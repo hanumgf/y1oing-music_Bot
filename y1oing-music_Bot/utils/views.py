@@ -60,48 +60,66 @@ class ControlPanelView(discord.ui.View):
         return True
 
 
+
     # --- Button Definitions ---
+
 
     @discord.ui.button(emoji="⏮️", style=discord.ButtonStyle.secondary, custom_id="previous_button", row=0)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("previous", 4.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        # 1. Defer immediately to acknowledge the interaction.
+        await interaction.response.defer()
+        
+        # 2. Perform all checks.
+        if not self.player.history:
+            await interaction.followup.send("No previous tracks in history.", ephemeral=True)
             return
-        message = self.player.previous()
-        await interaction.response.send_message(message, ephemeral=True)
+        if remaining := self.is_on_cooldown("previous", 4.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
+            return
+
+        # 3. Execute the main action.
+        self.player.previous()
 
 
     @discord.ui.button(emoji="⏯️", style=discord.ButtonStyle.primary, custom_id="pause_resume_button", row=0)
     async def pause_resume(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("pause_resume", 4.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        # 1. Defer immediately.
+        await interaction.response.defer()
+
+        # 2. Check cooldown.
+        if remaining := self.is_on_cooldown("pause_resume", 2.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
             return
         
-        # Toggle between pause and resume based on the current state.
-        # 現在の状態に応じて、一時停止と再開を切り替えます。
+        # 3. Execute the main action. These methods update the panel internally.
         if self.player.voice_client and self.player.voice_client.is_paused():
             await self.player.resume()
         else:
             await self.player.pause()
-        
-        # The panel will be updated by the player, so just defer the interaction.
-        # パネルはプレイヤーによって更新されるため、インタラクションを遅延させるだけで良いです。
-        await interaction.response.defer()
 
 
     @discord.ui.button(emoji="⏭️", style=discord.ButtonStyle.secondary, custom_id="skip_button", row=0)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("skip", 4.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        # 1. Defer immediately.
+        await interaction.response.defer()
+        
+        # 2. Perform all checks.
+        if not self.player.is_playing:
+            await interaction.followup.send("Nothing to skip.", ephemeral=True)
             return
-        message = self.player.skip()
-        await interaction.response.send_message(message, ephemeral=True)
+        if remaining := self.is_on_cooldown("skip", 2.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
+            return
+            
+        # 3. Execute the main action.
+        self.player.skip()
 
 
     @discord.ui.button(label="➖", style=discord.ButtonStyle.secondary, custom_id="volume_down_button", row=1)
     async def volume_down(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("volume", 5.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        await interaction.response.defer()
+        if remaining := self.is_on_cooldown("volume", 1.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
             return
         current_volume = int(self.player.volume * 100)
         new_volume = max(0, current_volume - 10)
@@ -110,13 +128,14 @@ class ControlPanelView(discord.ui.View):
 
     @discord.ui.button(label="🔊 100%", style=discord.ButtonStyle.grey, disabled=True, custom_id="volume_display_button", row=1)
     async def volume_display(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass # This button is for display only.
+        pass # This button is for display purposes only.
 
 
     @discord.ui.button(label="➕", style=discord.ButtonStyle.secondary, custom_id="volume_up_button", row=1)
     async def volume_up(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("volume", 5.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        await interaction.response.defer()
+        if remaining := self.is_on_cooldown("volume", 1.0): # Shares cooldown with volume_down.
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
             return
         current_volume = int(self.player.volume * 100)
         new_volume = min(200, current_volume + 10)
@@ -125,22 +144,27 @@ class ControlPanelView(discord.ui.View):
 
     @discord.ui.button(emoji="🔄", label="Off", style=discord.ButtonStyle.secondary, custom_id="loop_button", row=2)
     async def loop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("loop", 5.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        await interaction.response.defer()
+        if remaining := self.is_on_cooldown("loop", 2.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
             return
+        
         new_mode_name = self.player.toggle_loop()
         self.update_all_buttons()
-        await interaction.response.edit_message(view=self)
-        await interaction.followup.send(f"Loop mode changed to **{new_mode_name.title()}**.", ephemeral=True)
+        await interaction.edit_original_response(view=self) # Use edit_original_response after defer.
+        await interaction.followup.send(f"Loop mode set to **{new_mode_name}**.", ephemeral=True)
 
 
     @discord.ui.button(emoji="⏹️", label="Stop", style=discord.ButtonStyle.danger, custom_id="stop_button", row=2)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if remaining := self.is_on_cooldown("stop", 4.0):
-            await interaction.response.send_message(f"⏳ Button is on cooldown. Try again in **{round(remaining, 1)}s**.", ephemeral=True)
+        await interaction.response.defer()
+        if not self.player.is_playing:
+            await interaction.followup.send("Nothing is playing.", ephemeral=True)
             return
-        message = await self.player.stop()
-        await interaction.response.send_message(message, ephemeral=True)
+        if remaining := self.is_on_cooldown("stop", 4.0):
+            await interaction.followup.send(f"⏳ Please wait {round(remaining, 1)}s.", ephemeral=True)
+            return
+        await self.player.stop()
     
 
     # --- Helper Methods ---
