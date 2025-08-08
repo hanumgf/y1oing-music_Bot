@@ -6,39 +6,39 @@ This document provides a comprehensive overview of the design, architecture, and
 ## 1. Project Philosophy & Goals
 
 ### 1.1. Motivation
-This project was born out of a determination to succeed where previous attempts at building a music bot had failed. It is a response to the current landscape of music bots, which, while feature-rich, often neglect the core user experience and performance aspects that truly matter. The ultimate goal was to craft a music bot that is not just functional, but exceptional—prioritizing minimal latency, high responsiveness, and an intuitive interface.
+This project was born out of a determination to succeed where previous attempts at building a music bot had failed. It is a response to the current landscape of music bots, which, while feature-rich, often neglect the core user experience and performance aspects that truly matter. The ultimate goal was to craft a music bot that is both functional and user-friendly—prioritizing responsiveness and an intuitive interface.
 
-> **日本語:** このプロジェクトは、幾度となく挫折した音楽ボット制作への再挑戦から生まれました。多機能でありながら、本当に大切な「使いやすさ」や「パフォーマンス」がおろそかになりがちな既存のBotへの一つの答えです。遅延を極限まで減らし、応答性に優れ、直感的に使える—ただ機能するだけでない、卓越した音楽ボットを創り上げることが目標でした。
+> **日本語:** このプロジェクトは、幾度となく挫折した音楽ボット制作への再挑戦から生まれました。多機能でありながら、本当に大切な「使いやすさ」や「パフォーマンス」がおろそかになりがちな既存のBotへの一つの答えです。応答性に優れ、直感的に使える、安定して使いやすい音楽ボットを創り上げることが目標でした。
 
 ### 1.2. Core Objectives
 - **Project Name**: **y1oing BOT**
-- **Primary Goal**: To create the ultimate, most comfortable, and highest quality music bot, built for a perfect personal experience. (私だけの最高に快適で最高なMusic Botを作ること。)
+- **Primary Goal**: To create a comfortable and quality music bot, built for a great personal experience. (私だけの快適なMusic Botを作ること。)
 - **Technology**: **Python**, chosen for its robust ecosystem and developer-friendly nature.
 
 ---
 
 ## 2. Feature Blueprint
 
-y1oing BOT is equipped with a rich set of features, designed to provide a complete and satisfying music experience.
-(y1oing BOTは、完全で満足のいく音楽体験を提供するために設計された、豊富な機能を備えています。)
+y1oing BOT is equipped with a rich set of features, designed to provide a pleasant music experience.
+(y1oing BOTは、快適な音楽体験を提供するために設計された、豊富な機能を備えています。)
 
 | Category                  | Feature                               | Description                                                                 |
 |:--------------------------|:--------------------------------------|:----------------------------------------------------------------------------|
-| **Core Playback**         | High-Fidelity Playback                | Play, pause, resume, skip, and return to previous tracks with pristine audio quality. |
+| **Core Playback**         | Clear Audio Playback                  | Play, pause, resume, skip, and return to previous tracks with clear audio quality. |
 |                           | Interactive Control Panel             | A real-time, persistent UI for all major playback controls.                 |
 |                           | Versatile Loop Modes                  | Loop a single track, the entire queue, or turn looping off.                 |
 |                           | Dynamic Volume Control                | Adjust volume on the fly (0-200%) via commands or interactive buttons.      |
-| **Advanced Queue**        | Robust Queue Management               | Add, view, and remove tracks from a responsive queue system.                |
+| **Advanced Queue**        | Functional Queue Management           | Add, view, and remove tracks from a responsive queue system.                |
 |                           | Interactive Search                    | Search YouTube and select tracks from a clean, paginated results menu.      |
-|                           | Background Buffering Support          | Pre-buffers the next track to ensure seamless, gapless-like transitions.    |
+|                           | Background Buffering Support          | Pre-buffers the next track to ensure smooth transitions.                    |
 | **Playlist System**       | Personal Playlists                    | Create, manage, and play your own private, persistent playlists.            |
-|                           | Shared Server Playlists               | Collaborate on server-wide playlists with a sophisticated permission model. |
+|                           | Shared Server Playlists               | Collaborate on server-wide playlists with a flexible permission model.      |
 |                           | YouTube Playlist Integration          | Add entire public YouTube playlists to your queue or personal playlists.    |
 | **User Customization**    | User Profile System                   | Save and automatically load your preferred settings (volume, EQ).           |
 |                           | Audio Equalizer                       | Fine-tune audio output with a configurable multi-band equalizer.            |
-| **User Experience**       | High-Performance Architecture         | Heavy tasks are offloaded to separate processes, ensuring the bot never lags. |
-|                           | Intelligent Auto-Disconnect           | Automatically leaves the voice channel after inactivity to save resources.  |
-|                           | Comprehensive Help Command            | An interactive help menu guides users through all available features.       |
+| **User Experience**       | Responsive Architecture               | Heavy tasks are offloaded to separate processes, ensuring the bot remains responsive. |
+|                           | Auto-Disconnect                       | Automatically leaves the voice channel after inactivity to save resources.  |
+|                           | Helpful Command Guide                 | An interactive help menu guides users through all available features.       |
 
 ---
 
@@ -112,7 +112,6 @@ y1oing-bot/
     ├── playlist_manager.py       # Handles all CRUD logic for playlist data
     ├── profile_manager.py        # Handles loading/saving of user profiles
     └── views.py                  # Defines interactive UI components (Buttons, Menus)
-```
 
 ---
 
@@ -126,7 +125,7 @@ The project was developed through a structured, phased approach, ensuring each c
 - **Key Deliverables**:
     - `[✔]` Core commands (`/play`, `/pause`, `/stop`, etc.)
     - `[✔]` Interactive "Now Playing" panel
-    - `[✔]` Robust queue management
+    - `[✔]` Functional queue management
     - `[✔]` Basic interactive search
 
 ### Phase 2: Playlist & User Systems `[COMPLETED]`
@@ -148,9 +147,10 @@ The project was developed through a structured, phased approach, ensuring each c
 ### Phase 4: Polish & Finalization `[COMPLETED]`
 - **Objective**: Finalize the user experience and prepare for release.
 - **Key Deliverables**:
-    - `[✔]` Polished and comprehensive `/help` command
+    - `[✔]` Polished and helpful `/help` command
     - `[✔]` Final utility commands (`/feedback`, `/about`)
     - `[✔]` Extensive bug fixing and stability testing
+```
 
 ### Final Project Status
 
