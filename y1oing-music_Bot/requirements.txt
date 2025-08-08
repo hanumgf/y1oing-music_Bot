@@ -1,0 +1,11 @@
+# Discord Bot Framework
+discord.py
+
+# For loading environment variables from .env file
+python-dotenv
+
+# For fetching audio stream info from YouTube and other sites
+yt-dlp
+
+# Required by discord.py for voice functionality (encryption)
+PyNaCl

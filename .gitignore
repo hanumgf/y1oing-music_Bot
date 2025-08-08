@@ -1,0 +1,13 @@
+.env
+config.json
+venv/
+y1oing-music_Bot/bot/__pycache__/
+y1oing-music_Bot/bot/cogs/__pycache__/
+y1oing-music_Bot/utils/__pycache__/
+ffmpeg-2025-06-26-git-09cd38e9d5-essentials_build/
+y1oing-music_Bot/data/playlists/server/1364192771404992542.json
+y1oing-music_Bot/data/playlists/solo/1030100948003065866.json
+y1oing-music_Bot/data/profiles/1030100948003065866.json
+app.bat
+start_Bot.vbs
+start_Bot.vbs - ショートカット.lnk
