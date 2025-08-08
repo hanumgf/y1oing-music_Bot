@@ -69,7 +69,14 @@
 
 以下の手順に従うことで、ボットをあなたの環境で動かすことができます。
 
-### Step 1: Clone the Repository
+> **💡 簡単な方法 (Easy Method):**
+> Gitの操作が苦手な方は、このリポジトリの[**Releasesページ**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest)から最新版のソースコード (`Source code (zip)`) を直接ダウンロードするのが一番簡単です。ダウンロードした後は、下の **Step 2** から手順を進めてください。
+> 
+> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest). After downloading, please proceed from **Step 2** below.
+
+---
+
+### Step 1: Clone the Repository (Gitを使う場合)
 まず、このリポジトリをローカルマシンにクローン（ダウンロード）します。
 ```sh
 git clone https://github.com/hanumgf/y1oing-music_Bot.git
