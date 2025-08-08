@@ -124,15 +124,16 @@ class Player:
                         if self.autoleave_task: self.autoleave_task.cancel()
                         self.autoleave_task = self.bot.loop.create_task(self.autoleave_timer())
                     
-                    # Once in standby mode, completely sever references to the old panel.
-                    self.now_playing_message = None
-                    
                     # Wait here until a new song is added to the queue.
                     # 新しい曲がキューに追加されるまで、ここで待機します。
                     await self.queue_added.wait()
                     
                     # Woken up, indicating a new session. Clear old state.
                     # 待機から復帰。これは新しいセッションの開始を意味するため、古い状態をクリアします。
+                    
+                    # Forget about the old panel just before the new session starts.
+                    self.now_playing_message = None 
+                    
                     self.history.clear()
                     self.loop_mode = "off"
                     continue # Restart the loop to process the new track.
@@ -257,19 +258,17 @@ class Player:
     async def autoleave_timer(self):
         """Waits for a period of inactivity, then triggers cleanup."""
         await asyncio.sleep(600) # 10 minutes
-        if self.voice_client and self.voice_client.is_connected() and not self.is_playing and not self.is_cleaning_up:
-            if self.text_channel:
-                await self.text_channel.send("👋 Leaving due to 10 minutes of inactivity.")
+        if self.voice_client and not self.is_playing and not self.is_cleaning_up:
+            
             await self.cleanup()
 
 
     async def cleanup(self):
         """
-        The final cleanup method. Stops all tasks, disconnects from voice,
-        and ensures the Player instance is fully torn down.
-        
-        最終的なクリーンアップメソッド。全タスクを停止し、VCから切断し、
-        Playerインスタンスが完全に解体されることを保証します。
+        [EN] The final cleanup method. Stops all tasks, disconnects from voice,
+        [EN] sends a final message if appropriate, and ensures the instance is torn down.
+        [JP] 最終的なクリーンアップメソッド。全タスクを停止し、VCから切断し、
+        [JP] 適切な場合は最終メッセージを送信し、インスタンスが完全に解体されることを保証します。
         """
         if self.is_cleaning_up: return
         self.is_cleaning_up = True
@@ -277,12 +276,22 @@ class Player:
         print(f"Cleaning up Player for guild {self.guild_id}...")
         self.is_playing = False
 
-        if self.now_playing_message:
-            try:
-                embed = discord.Embed(title="👋 See you!", description="Thanks for listening.", color=discord.Color.dark_grey())
-                await self.now_playing_message.edit(embed=embed, view=None)
-            except (discord.NotFound, discord.HTTPException): pass
-            finally: self.now_playing_message = None
+        # If there is a text channel that was last operated, send a final greeting there.
+        if self.text_channel:
+            # If there are any old panels that can be edited, edit them.
+            if self.now_playing_message:
+                try:
+                    embed = discord.Embed(title="👋 See you!", description="Thanks for using the bot.", color=discord.Color.dark_grey())
+                    await self.now_playing_message.edit(embed=embed, view=None)
+                except (discord.NotFound, discord.HTTPException):
+                    # If editing fails, send a new message.
+                    await self.text_channel.send(embed=embed)
+            else:
+                # If there is no panel to edit, send a new message.
+                embed = discord.Embed(title="👋 See you!", description="Thanks for using the bot.", color=discord.Color.dark_grey())
+                await self.text_channel.send(embed=embed)
+
+        self.now_playing_message = None
 
         tasks_to_cancel = [self.panel_update_task, self.add_tracks_task, self.autoleave_task, self.empty_channel_leavetask, self.player_task]
         for task in tasks_to_cancel:
