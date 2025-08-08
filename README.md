@@ -131,18 +131,18 @@ python run.py
 
     - Next, modify the command sync block inside the `setup_hook` method:
         - **Before:**
-          ```python
-          # self.tree.copy_global_to(guild=TEST_GUILD)
-          # await self.tree.sync(guild=TEST_GUILD)
-          await self.tree.sync()
-          ```
+      ```python
+      # self.tree.copy_global_to(guild=TEST_GUILD)
+      # await self.tree.sync(guild=TEST_GUILD)
+      await self.tree.sync()
+      ```
 
         - **After:**
-          ```python
-          self.tree.copy_global_to(guild=TEST_GUILD)
-          await self.tree.sync(guild=TEST_GUILD)
-          # await self.tree.sync()
-          ```
+      ```python
+      self.tree.copy_global_to(guild=TEST_GUILD)
+      await self.tree.sync(guild=TEST_GUILD)
+      # await self.tree.sync()
+      ```
 
 Restart the bot, and slash commands will be available instantly on your test server. Remember to revert these changes for production.
 
