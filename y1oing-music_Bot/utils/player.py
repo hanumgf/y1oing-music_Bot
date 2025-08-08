@@ -124,6 +124,9 @@ class Player:
                         if self.autoleave_task: self.autoleave_task.cancel()
                         self.autoleave_task = self.bot.loop.create_task(self.autoleave_timer())
                     
+                    # Once in standby mode, completely sever references to the old panel.
+                    self.now_playing_message = None
+                    
                     # Wait here until a new song is added to the queue.
                     # 新しい曲がキューに追加されるまで、ここで待機します。
                     await self.queue_added.wait()
@@ -335,6 +338,9 @@ class Player:
                 await self.now_playing_message.edit(embed=self.create_now_playing_embed(finished=True), view=self.get_current_view(finished=True))
             except discord.NotFound: pass
         
+            # Once you stop, you won't use this panel anymore, so forget about it.
+            self.now_playing_message = None 
+        
         self.stop_requested = True
         if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
             self.voice_client.stop()
@@ -495,9 +501,16 @@ class Player:
         """Sends a new Now Playing panel or edits the existing one."""
         if not self.text_channel: return
         try:
-            if self.now_playing_message:
+            # If now_playing_message exists and is within the last hour, attempt to edit it.
+            if self.now_playing_message and (discord.utils.utcnow() - self.now_playing_message.created_at).total_seconds() < 3600:
                 await self.now_playing_message.edit(embed=embed, view=view)
             else:
+                # If it does not exist or is too old, send a new message.
+                if self.now_playing_message:
+                    # Remove buttons from old messages
+                    try: await self.now_playing_message.edit(view=None)
+                    except (discord.NotFound, discord.HTTPException): pass
+                
                 self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
         except discord.NotFound: 
             self.now_playing_message = await self.text_channel.send(embed=embed, view=view)
