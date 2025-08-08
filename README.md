@@ -7,8 +7,8 @@
 [![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
-**English:** A high-performance, feature-rich Discord music bot designed for the ultimate audio experience.  
-**日本語:** 究極のオーディオ体験のために設計された、高性能・多機能なDiscord音楽ボット。
+**English:** A responsive and stable Discord music bot with a focus on a quality audio experience.  
+**日本語:** 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
 
 ---
 
@@ -25,12 +25,12 @@
 
 ## About The Project
 
-このプロジェクトは、パフォーマンスと優れた設計にこだわって作られた、究極のDiscord音楽ボットです。幾度となく挫折したボット制作の経験から得た教訓をすべて注ぎ込み、「私だけの最高に快適で最高なMusic Bot」を目指して開発されました。
+このプロジェクトは、応答性と安定した動作を重視して設計されたDiscord音楽ボットです。幾度となく挫折したボット制作の経験から得た教訓をすべて注ぎ込み、「私だけの快適なMusic Bot」を目指して開発されました。
 
 ### Key Highlights
-- **高性能アーキテクチャ:** 重い処理を別プロセスで実行することで、Bot本体の応答性を常に維持します。
-- **高音質再生:** FFmpegのオーディオフィルターを利用し、クリアで安定した音質を提供します。
-- **高度なプレイリスト機能:** 個人用プレイリストに加え、権限管理が可能なサーバー共有プレイリストをサポートします。
+- **スムーズな応答性:** 重い処理を別プロセスで実行することで、Bot本体の応答性を常に維持します。
+- **クリアな音質:** FFmpegのオーディオフィルターを利用し、クリアで安定した音質を提供します。
+- **柔軟なプレイリスト機能:** 個人用プレイリストに加え、権限管理が可能なサーバー共有プレイリストをサポートします。
 - **直感的なUI:** 全ての主要な操作は、リアルタイムに更新されるインタラクティブなボタンとメニューから行えます。
 
 ---
