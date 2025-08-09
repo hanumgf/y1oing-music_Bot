@@ -7,8 +7,8 @@
 [![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
- A responsive and stable Discord music bot with a focus on a quality audio experience.  
- 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
+ - A responsive and stable Discord music bot with a focus on a quality audio experience.  
+ - 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
 
 ---
 
@@ -133,8 +133,14 @@ python run.py
 2.  **Edit `client.py`**
     - Open `bot/client.py`.
     - Find the `TEST_GUILD` line and replace the ID with your server's ID.
-        - **Before:** ```TEST_GUILD = discord.Object(id=0000)```
-        - **After:** ```TEST_GUILD = discord.Object(id=YOUR_SERVER_ID_HERE)```
+        - **Before:**
+      ```python
+      TEST_GUILD = discord.Object(id=0000)
+      ```
+        - **After:**
+      ```python
+      TEST_GUILD = discord.Object(id=YOUR_SERVER_ID_HERE)
+      ```
 
     - Next, modify the command sync block inside the `setup_hook` method:
         - **Before:**
