@@ -7,8 +7,8 @@
 [![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
-**English:** A responsive and stable Discord music bot with a focus on a quality audio experience.  
-**日本語:** 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
+- A responsive and stable Discord music bot with a focus on a quality audio experience.  
+- 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
 
 ---
 
