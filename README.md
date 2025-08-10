@@ -7,8 +7,8 @@
 [![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
- - A responsive and stable Discord music bot with a focus on a quality audio experience.  
- - 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
+**English:** A responsive and stable Discord music bot with a focus on a quality audio experience.  
+**日本語:** 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
 
 ---
 
@@ -56,7 +56,7 @@
 
 ## Prerequisites
 
-このボットを動作させるには、以下のソフトウェアが必要です。
+The following software is required to run this bot.
 
 - **Python 3.10** or higher
 - **FFmpeg**
@@ -67,55 +67,49 @@
 
 ## Getting Started
 
-以下の手順に従うことで、ボットをあなたの環境で動かすことができます。
+Follow these steps to get the bot running in your own environment.
 
-> **💡 簡単な方法 (Easy Method):**
-> Gitの操作が苦手な方は、このリポジトリの[**Releasesページ**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest)から最新版のソースコード (`Source code (zip)`) を直接ダウンロードするのが一番簡単です。ダウンロードした後は、下の **Step 2** から手順を進めてください。
-> 
+> **💡 Easy Method (簡単な方法):**
 > If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest). After downloading, please proceed from **Step 2** below.
+> 
+> Gitの操作が苦手な方は、このリポジトリの[**Releasesページ**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest)から最新版のソースコード (`Source code (zip)`) を直接ダウンロードするのが一番簡単です。ダウンロードした後は、下の **Step 2** から手順を進めてください。
 
 ---
 
-### Step 1: Clone the Repository (Gitを使う場合)
-まず、このリポジトリをローカルマシンにクローン（ダウンロード）します。
+### Step 1: Clone the Repository (リポジトリのクローン)
 ```sh
 git clone https://github.com/hanumgf/y1oing-music_Bot.git
 cd y1oing-music_Bot
 ```
 
-### Step 2: Create a Virtual Environment (Recommended)
-プロジェクト用に独立したPython環境を作成します。
+### Step 2: Create a Virtual Environment (仮想環境の作成)
 ```sh
 python -m venv venv
 ```
 
-作成した仮想環境を有効化します:
+Activate the virtual environment:
 - **Windows:** `.\venv\Scripts\activate`
 - **macOS / Linux:** `source venv/bin/activate`
 
-### Step 3: Install Dependencies
-必要なPythonライブラリをすべてインストールします。
+### Step 3: Install Dependencies (依存関係のインストール)
 ```sh
 pip install -r requirements.txt
 ```
 
-### Step 4: Prepare your Discord Bot Token
-ボットをDiscordに接続させるための「トークン」が必要です。
-
+### Step 4: Prepare your Discord Bot Token (Discord Bot Tokenの準備)
 1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
 2.  Navigate to the "Bot" tab and click "Add Bot".
-3.  Enable all three **Privileged Gateway Intents** (`PRESENCE INTENT`, `SERVER MEMBERS INTENT`, `MESSAGE CONTENT INTENT`).
-4.  Click "Reset Token" to generate your bot's token and copy it securely. **Do not share this token with anyone.**
+3.  Enable all three **Privileged Gateway Intents**.
+4.  Click "Reset Token" to generate your bot's token and copy it securely.
 
-### Step 5: Configure Environment Variables
-プロジェクトのルートディレクトリに `.env` という名前のファイルを新規作成してください。そして、そのファイルに以下の内容を記述し、先ほど取得したボットのトークンを設定します。
+### Step 5: Configure Environment Variables (環境変数の設定)
+Create a new file named `.env` in the project root directory. Then, add the following content and set your bot token.
 ```env
 # .env
 DISCORD_TOKEN="ここにあなたのボットのトークンを貼り付けます"
 ```
 
-### Step 6: Run the Bot
-すべての準備が整いました。以下のコマンドでボットを起動します。
+### Step 6: Run the Bot (ボットの起動)
 ```sh
 python run.py
 ```
@@ -124,13 +118,13 @@ python run.py
 
 ## For Developers: Fast Command Sync
 
-スラッシュコマンドは、通常、Discord全体に反映されるまで最大1時間かかることがあります。開発中にこれを待つのは非効率なため、特定のテストサーバー（ギルド）にだけコマンドを即時反映させる方法があります。
+To apply slash commands to a test server instantly (instead of waiting up to an hour), follow these steps.
 
-1.  **Get your Test Server ID**
+1.  **Get your Test Server ID (テストサーバーIDの取得)**
     - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
     - Right-click your server icon and select "Copy Server ID".
 
-2.  **Edit `client.py`**
+2.  **Edit `client.py` (`client.py`の編集)**
     - Open `bot/client.py`.
     - Find the `TEST_GUILD` line and replace the ID with your server's ID.
         - **Before:**
@@ -157,7 +151,7 @@ python run.py
       # await self.tree.sync()
       ```
 
-Restart the bot, and slash commands will be available instantly on your test server. Remember to revert these changes for production.
+Restart the bot, and slash commands will be available immediately on your test server.
 
 ---
 
