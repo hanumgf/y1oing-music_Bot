@@ -164,4 +164,4 @@ The project was developed through a structured, phased approach, ensuring each c
 | **Phase 4: Finalization** | ✅ Completed      | 仕上げ                                 |
 | **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
 
-[![Creater](https://cdn.discordapp.com/avatars/1030100948003065866/ed537c0f7ab8757d38afc475b5b69065.webp?size=40)](https://discord.com/users/1030100948003065866)
+[![Creater](https://cdn.discordapp.com/avatars/1030100948003065866/ed537c0f7ab8757d38afc475b5b69065.webp?size=20)](https://discord.com/users/1030100948003065866)
