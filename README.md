@@ -176,4 +176,4 @@ Restart the bot, and slash commands will be available immediately on your test s
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-Created by [`y1.ing`](https://discord.com/users/1030100948003065866)
+Created by `y1.ing`
