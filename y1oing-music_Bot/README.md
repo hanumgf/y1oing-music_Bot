@@ -163,3 +163,5 @@ The project was developed through a structured, phased approach, ensuring each c
 | **Phase 3: Advanced**     | ✅ Completed      | 高度な機能                             |
 | **Phase 4: Finalization** | ✅ Completed      | 仕上げ                                 |
 | **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
+
+by [`y1.ing`](https://discord.com/users/1030100948003065866)
