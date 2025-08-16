@@ -79,6 +79,8 @@ Follow these steps to get the bot running in your own environment.
 ### Step 1: Clone the Repository (リポジトリのクローン)
 ```sh
 git clone https://github.com/hanumgf/y1oing-music_Bot.git
+```
+```sh
 cd y1oing-music_Bot
 ```
 
