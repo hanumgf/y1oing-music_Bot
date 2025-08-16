@@ -48,26 +48,32 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
         with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
             info = ydl.extract_info(query, download=False)
         
-        # In case of a playlist, take the first entry. Otherwise, use the info itself.
-        # プレイリストの場合は最初のエントリーを使用し、そうでなければinfo自体を使用します。
-        entry = info.get('entries', [info])[0]
+        # If the result is a playlist (has 'entries'), return the whole info dict.
+        # Otherwise, format it as a single track object as before.
+        # [JP] もし結果がプレイリスト（'entries'を持つ）なら、info辞書をそのまま返す。
+        # [JP] そうでなければ、これまで通り単一の曲オブジェクトに整形して返す。
+        if 'entries' in info:
+            return info, None # Return the full playlist data
+        else:
+            entry = info
             
-        # Find the best available stream URL from the extracted info.
-        # 抽出された情報から利用可能な最良のストリームURLを探索します。
-        stream_url = info.get('url')
-        if not stream_url:
+            # Ensure the stream URL is included for single tracks
+            stream_url = None
             for f in info.get('formats', []):
                 if f.get('acodec') != 'none' and f.get('vcodec') == 'none':
                     stream_url = f.get('url')
                     break
-        
-        return {
-            'id': entry.get('id'), 'title': entry.get('title', 'Unknown'),
-            'webpage_url': entry.get('webpage_url'), 'thumbnail': entry.get('thumbnail'),
-            'uploader': entry.get('uploader', 'Unknown'), 'uploader_url': entry.get('uploader_url'),
-            'duration': entry.get('duration', 0),
-            'url': stream_url
-        }, None
+            if not stream_url:
+                stream_url = info.get('url')
+
+            return {
+                'id': entry.get('id'), 'title': entry.get('title', 'Unknown'),
+                'webpage_url': entry.get('webpage_url'), 'thumbnail': entry.get('thumbnail'),
+                'uploader': entry.get('uploader', 'Unknown'), 'uploader_url': entry.get('uploader_url'),
+                'duration': entry.get('duration', 0),
+                'url': stream_url
+            }, None
+    
     except Exception as e:
         return None, str(e)
 
@@ -161,8 +167,9 @@ class AudioHandler:
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': (
                 '-vn '
-                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000,'
-                'loudnorm=I=-16:LRA=11:TP=-1.5"'
+                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" ' # Filter 1
+                '-af "superequalizer=1b=2:f=80:t=q:w=1.2|2b=2:f=8000:t=q:w=1.2" '  # Filter 2
+                '-af "loudnorm=I=-18:LRA=7:TP=-2.0"'                               # Filter 3
             )
         }
         

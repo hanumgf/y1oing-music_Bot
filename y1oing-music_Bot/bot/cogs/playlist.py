@@ -44,15 +44,14 @@ class PlaylistCog(commands.Cog):
     async def playlist_add(self, interaction: discord.Interaction, playlist_name: str, query: str):
         await interaction.response.defer(ephemeral=True)
         
-        # Prevent adding auto-generated YouTube Mix playlists.
-        # YouTubeが自動生成したMixリストの追加を防止します。
+        # This check is good, but filtering by ID ('RD') later is more robust.
+        # We can keep this as a quick initial check.
         if 'list=RD' in query:
             await interaction.followup.send("❌ YouTube's auto-generated 'Mix' playlists cannot be added.")
             return
             
-        # Fetch track information, allowing multiple tracks if a playlist URL is provided.
-        # 曲情報を取得します。プレイリストURLの場合は複数の曲取得を許可します。
-        track_data, error_msg = await self.audio_handler.get_track_info(query, allow_playlist=True)
+        # Fetch track information.
+        full_data, error_msg = await self.audio_handler.get_track_info(query, allow_playlist=True)
 
         if error_msg:
             await interaction.followup.send(error_msg)
@@ -60,11 +59,32 @@ class PlaylistCog(commands.Cog):
             
         user_id = interaction.user.id
         
-        # Check if the result is a playlist (dict with 'entries') or a single track.
-        # 結果がプレイリスト（'entries'キーを持つ辞書）か、単一の曲かを判断します。
-        if 'entries' in track_data:
-            playlist_tracks = track_data['entries']
+        # Check if the result is a playlist or a single track.
+        if 'entries' in full_data:
+            # --- Filtration Filter ---
+            # [EN] Helper function to extract only the data we need.
+            # [JP] 必要なデータだけを抽出するためのヘルパー関数。
+            def extract_core_info(entry):
+                return {
+                    'title': entry.get('title', 'Unknown Title'),
+                    'uploader': entry.get('uploader', 'Unknown Artist'),
+                    'duration': entry.get('duration', 0),
+                    'webpage_url': entry.get('webpage_url'),
+                    'thumbnail': entry.get('thumbnail'),
+                }
+
+            # [EN] Apply the filter to each track and also filter out YouTube Mixes.
+            # [JP] 各トラックにフィルターを適用し、YouTube Mixも除外します。
+            playlist_tracks = [
+                extract_core_info(track) for track in full_data['entries']
+                if track and not track.get('id', '').startswith('RD')
+            ]
+            # --- Filtration Ends ---
             
+            if not playlist_tracks:
+                await interaction.followup.send("❌ No addable tracks found in this playlist.")
+                return
+
             if len(playlist_tracks) > 150:
                 await interaction.followup.send(f"❌ You can only add up to 150 tracks at once. (Detected: {len(playlist_tracks)} tracks)")
                 return
@@ -73,15 +93,25 @@ class PlaylistCog(commands.Cog):
                 scope="solo", 
                 owner_id=user_id, 
                 playlist_name=playlist_name, 
-                tracks=playlist_tracks,
+                tracks=playlist_tracks, # Pass the clean, filtered list
                 user=interaction.user
             )
         else:
+            # [EN] Even for a single track, filter it to keep data consistent.
+            # [JP] 単一の曲でも、データの一貫性を保つためにフィルターをかけます。
+            core_track_info = {
+                'title': full_data.get('title', 'Unknown Title'),
+                'uploader': full_data.get('uploader', 'Unknown Artist'),
+                'duration': full_data.get('duration', 0),
+                'webpage_url': full_data.get('webpage_url'),
+                'thumbnail': full_data.get('thumbnail'),
+            }
+            
             message = self.playlist_manager.add_track(
                 scope="solo", 
                 owner_id=user_id, 
                 playlist_name=playlist_name, 
-                track_info=track_data,
+                track_info=core_track_info, # Pass the clean, single track info
                 user=interaction.user
             )
             

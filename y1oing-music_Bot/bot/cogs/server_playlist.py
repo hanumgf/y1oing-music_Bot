@@ -151,7 +151,7 @@ class ServerPlaylistCog(commands.Cog):
             await interaction.followup.send("❌ YouTube's auto-generated 'Mix' playlists cannot be added.")
             return
 
-        track_data, error_msg = await self.audio_handler.get_track_info(query, allow_playlist=True)
+        full_data, error_msg = await self.audio_handler.get_track_info(query, allow_playlist=True)
 
         if error_msg:
             await interaction.followup.send(error_msg)
@@ -159,21 +159,53 @@ class ServerPlaylistCog(commands.Cog):
 
         server_id = interaction.guild.id
         
-        # Add multiple tracks (from a playlist URL) or a single track.
-        # 複数の曲（プレイリストURLから）または単一の曲を追加します。
-        if 'entries' in track_data:
-            playlist_tracks = track_data['entries']
-            
+        if 'entries' in full_data:
+            # --- Filtration Filter ---
+            def extract_core_info(entry):
+                return {
+                    'title': entry.get('title', 'Unknown Title'),
+                    'uploader': entry.get('uploader', 'Unknown Artist'),
+                    'duration': entry.get('duration', 0),
+                    'webpage_url': entry.get('webpage_url'),
+                    'thumbnail': entry.get('thumbnail'),
+                }
+
+            playlist_tracks = [
+                extract_core_info(track) for track in full_data['entries']
+                if track and not track.get('id', '').startswith('RD')
+            ]
+            # --- Filtration Ends ---
+
+            if not playlist_tracks:
+                await interaction.followup.send("❌ No addable tracks found in this playlist.")
+                return
+
             if len(playlist_tracks) > 150:
                 await interaction.followup.send(f"❌ You can only add up to 150 tracks at once. (Detected: {len(playlist_tracks)} tracks)")
                 return
             
             message = self.playlist_manager.add_tracks(
-                scope="server", owner_id=server_id, playlist_name=playlist_name, tracks=playlist_tracks, user=interaction.user
+                scope="server", 
+                owner_id=server_id, 
+                playlist_name=playlist_name, 
+                tracks=playlist_tracks, 
+                user=interaction.user
             )
         else:
+            core_track_info = {
+                'title': full_data.get('title', 'Unknown Title'),
+                'uploader': full_data.get('uploader', 'Unknown Artist'),
+                'duration': full_data.get('duration', 0),
+                'webpage_url': full_data.get('webpage_url'),
+                'thumbnail': full_data.get('thumbnail'),
+            }
+
             message = self.playlist_manager.add_track(
-                scope="server", owner_id=server_id, playlist_name=playlist_name, track_info=track_data, user=interaction.user
+                scope="server", 
+                owner_id=server_id, 
+                playlist_name=playlist_name, 
+                track_info=core_track_info, 
+                user=interaction.user
             )
             
         await interaction.followup.send(message)

@@ -26,7 +26,7 @@ import os
 # To deploy commands globally for production, comment out or remove this line.
 # テストを高速化するため、コマンドを即時同期させるサーバー（ギルド）IDを指定します。
 # 本番環境でコマンドをグローバルにデプロイする場合は、この行をコメントアウトまたは削除してください。
-TEST_GUILD = discord.Object(id=0000) # <- Your test server ID (numeric) goes here
+TEST_GUILD = discord.Object(id=1364192771404992542) # <- Your test server ID (numeric) goes here
 
 
 

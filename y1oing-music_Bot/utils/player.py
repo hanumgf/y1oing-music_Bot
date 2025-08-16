@@ -257,7 +257,7 @@ class Player:
 
     async def autoleave_timer(self):
         """Waits for a period of inactivity, then triggers cleanup."""
-        await asyncio.sleep(600) # 10 minutes
+        await asyncio.sleep(300) # 5 minutes
         if self.voice_client and not self.is_playing and not self.is_cleaning_up:
             
             await self.cleanup()
@@ -348,7 +348,7 @@ class Player:
             except discord.NotFound: pass
         
             # Once you stop, you won't use this panel anymore, so forget about it.
-            self.now_playing_message = None 
+            # self.now_playing_message = None 
         
         self.stop_requested = True
         if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
