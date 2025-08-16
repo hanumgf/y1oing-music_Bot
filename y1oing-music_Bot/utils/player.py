@@ -170,10 +170,18 @@ class Player:
                     # 曲が終了するか、停止/スキップされるまでここで待機します。
                     await self.song_finished.wait()
                     
-                    self.is_playing = False
-                    if self.panel_update_task:
+                    # ▼▼▼ 最後の聖剣 ▼▼▼
+                    # [EN] Song has finished. The VERY FIRST thing to do is to kill the updater for this track.
+                    # [EN] This prevents zombie tasks when switching tracks quickly.
+                    # [JP] 曲が終了しました。最初に行うべきことは、この曲のアップデーターを完全に停止させることです。
+                    # [JP] これにより、曲が高速で切り替わる際のゾンビ・タスクを防ぎます。
+                    if self.panel_update_task and not self.panel_update_task.done():
                         self.panel_update_task.cancel()
                         self.panel_update_task = None
+                    
+                    # [EN] Now it is safe to declare that playback has stopped.
+                    # [JP] これで、再生が停止したと安全に宣言できます。
+                    self.is_playing = False
                         
         except asyncio.CancelledError:
             print(f"Player loop for guild {self.guild_id} was cancelled.")
@@ -212,12 +220,17 @@ class Player:
 
 
     async def ensure_voice_client_alive(self):
-        """Checks if the voice client is still connected, triggering cleanup if not."""
+        """
+        Checks if the VoiceClient is still connected. If not, attempts to gracefully
+        end the current song instead of a full cleanup.
+        """
         await asyncio.sleep(2)
-        if not self.voice_client or not self.voice_client.is_connected():
-            print(f"ERROR: VoiceClient disconnected during playback in guild {self.guild_id}. Triggering cleanup.")
-            if not self.is_cleaning_up:
-                await self.cleanup()
+        # プレーヤーが再生中であり、かつボイスクライアントが存在しない、または切断されている場合
+        if self.is_playing and (not self.voice_client or not self.voice_client.is_connected()):
+            print(f"ERROR: VoiceClient disconnected during playback in guild {self.guild_id}. Ending current song.")
+            # フルクリーンアップではなく、現在の曲の終了を通知する
+            if not self.song_finished.is_set():
+                self.song_finished.set()
 
 
     # --- State and Connection Management ---
@@ -276,20 +289,13 @@ class Player:
         print(f"Cleaning up Player for guild {self.guild_id}...")
         self.is_playing = False
 
-        # If there is a text channel that was last operated, send a final greeting there.
-        if self.text_channel:
-            # If there are any old panels that can be edited, edit them.
-            if self.now_playing_message:
-                try:
-                    embed = discord.Embed(title="👋 See you!", description="Thanks for using the bot.", color=discord.Color.dark_grey())
-                    await self.now_playing_message.edit(embed=embed, view=None)
-                except (discord.NotFound, discord.HTTPException):
-                    # If editing fails, send a new message.
-                    await self.text_channel.send(embed=embed)
-            else:
-                # If there is no panel to edit, send a new message.
+        # 既存のパネルがあれば編集し、なければ何もしない（新しいメッセージは送らない）
+        if self.now_playing_message:
+            try:
                 embed = discord.Embed(title="👋 See you!", description="Thanks for using the bot.", color=discord.Color.dark_grey())
-                await self.text_channel.send(embed=embed)
+                await self.now_playing_message.edit(embed=embed, view=None)
+            except (discord.NotFound, discord.HTTPException):
+                pass # 編集に失敗しても気にしない
 
         self.now_playing_message = None
 
@@ -298,7 +304,7 @@ class Player:
             if task and not task.done(): task.cancel()
         
         if self.voice_client and self.voice_client.is_connected():
-            await self.voice_client.disconnect()
+            await self.voice_client.disconnect(force=True) # force=Trueを追加して確実性を上げる
         self.voice_client = None
 
 
@@ -529,15 +535,58 @@ class Player:
 
     async def panel_updater(self):
         """[Background Task] Periodically updates the progress bar on the Now Playing panel."""
+        # [EN] Counter for consecutive network errors.
+        # [JP] 連続したネットワークエラーのカウンター。
+        consecutive_errors = 0
+        
         while self.is_playing:
-            embed = self.create_now_playing_embed()
             if self.now_playing_message and self.voice_client and self.voice_client.is_connected():
                 try:
-                    await self.now_playing_message.edit(embed=embed)
-                except (discord.NotFound, discord.HTTPException) as e:
-                    print(f"Panel updater edit error: {e}"); self.now_playing_message = None; break 
-            else: break
-            await asyncio.sleep(5)
+                    # [EN] Attempt to edit the panel.
+                    # [JP] パネルの編集を試みます。
+                    await self.now_playing_message.edit(embed=self.create_now_playing_embed())
+                    
+                    # [EN] If successful, reset the error counter.
+                    # [JP] 成功したら、エラーカウンターをリセットします。
+                    consecutive_errors = 0
+                    
+                except discord.HTTPException as e:
+                    # [EN] Handle HTTP-related errors (like 503 Service Unavailable).
+                    # [JP] HTTP関連のエラー（503 Service Unavailableなど）を処理します。
+                    print(f"Panel updater warning (HTTPException): {e.status} {e.text}")
+                    consecutive_errors += 1
+                    
+                    # [EN] If errors persist (e.g., 3 times in a row), assume the message is lost.
+                    # [JP] もしエラーが続くなら（例: 3回連続）、メッセージは失われたと判断します。
+                    if consecutive_errors >= 3:
+                        print("Panel updater failed multiple times. Assuming message is lost.")
+                        self.now_playing_message = None
+                        break # Exit the loop.
+                        
+                except discord.NotFound:
+                    # [EN] The message was deleted by a user. Stop trying to edit it.
+                    # [JP] メッセージがユーザーによって削除されました。編集を停止します。
+                    print("Panel updater stopped: Message was not found.")
+                    self.now_playing_message = None
+                    break # Exit the loop.
+                    
+                except Exception as e:
+                    # [EN] Handle other unexpected errors.
+                    # [JP] その他の予期せぬエラーを処理します。
+                    print(f"Panel updater encountered an unexpected error: {e}")
+                    consecutive_errors += 1
+                    if consecutive_errors >= 3:
+                        self.now_playing_message = None
+                        break
+            else:
+                # [EN] Player is no longer in a state to update the panel.
+                # [JP] プレイヤーはパネルを更新できる状態にありません。
+                break
+
+            # [EN] Wait for the next update cycle.
+            # [JP] 次の更新サイクルまで待機します。
+            await asyncio.sleep(10) # [EN] Increased sleep time to reduce API calls.
+                                    # [JP] APIコールを減らすためにスリープ時間を延長。
 
 
     def create_now_playing_embed(self, finished=False):
