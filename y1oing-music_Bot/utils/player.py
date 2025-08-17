@@ -111,7 +111,10 @@ class Player:
                     # --- Idle State: Queue is empty ---
                     # --- 待機状態: キューが空です ---
                     self.is_playing = False
-                    if self.current_track: self.history.append(self.current_track)
+                    
+                    # 最後に再生していた曲 (current_track) は、既にループ先頭の
+                    # [Post-Playback Phase] で履歴に追加されているはずなので、ここでは何もしない。
+                    # if self.current_track: self.history.append(self.current_track) # ← この行を削除
                     self.current_track = None
                     
                     if self.history:
@@ -123,19 +126,15 @@ class Player:
                     if self.text_channel:
                         if self.autoleave_task: self.autoleave_task.cancel()
                         self.autoleave_task = self.bot.loop.create_task(self.autoleave_timer())
-                    
-                    # Wait here until a new song is added to the queue.
-                    # 新しい曲がキューに追加されるまで、ここで待機します。
+
+                    # I'll wait here until a new song is added.
                     await self.queue_added.wait()
                     
-                    # Woken up, indicating a new session. Clear old state.
-                    # 待機から復帰。これは新しいセッションの開始を意味するため、古い状態をクリアします。
-                    
-                    # Forget about the old panel just before the new session starts.
+                    # Return from waiting.This means starting a new session, so it clears the old state.
                     self.now_playing_message = None 
-                    
-                    self.history.clear()
+                    self.history.clear() # ◀◀◀ This is the most important thing!
                     self.loop_mode = "off"
+                    
                     continue # Restart the loop to process the new track.
 
                 # [Playback Preparation Phase] A track is available.
@@ -390,8 +389,11 @@ class Player:
         if self.voice_client and self.voice_client.is_playing():
             self.voice_client.stop()
         else:
-            # If idle, `stop()` has no effect. This case is rare.
-            pass
+            # If idle, the player_loop is waiting at `queue_added.wait()`.
+            # We must set `queue_added` to wake it up.
+            # [JP] 待機中の場合、player_loopは`queue_added.wait()`で待っています。
+            # [JP] `queue_added`をセットして、ループを再開させる必要があります。
+            self.queue_added.set()
 
         return "⏮️ Returning to the previous track..."
 
