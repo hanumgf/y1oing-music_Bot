@@ -96,9 +96,11 @@ class Player:
                     elif self.skip_requested:
                         self.history.append(self.current_track)
                     else: # Natural song end
-                        if self.loop_mode == 'track': self.queue.appendleft(self.current_track)
-                        elif self.loop_mode == 'queue': self.queue.append(self.current_track)
-                        else: self.history.append(self.current_track)
+                        # Queue Loopの判定はここで行わない。Track Loopと通常の終了だけを処理する。
+                        if self.loop_mode == 'track': 
+                            self.queue.appendleft(self.current_track)
+                        else: # loop_modeが'off'または'queue'の場合、一律で履歴に入れる
+                            self.history.append(self.current_track)
 
                 self.skip_requested = False
                 self.is_previous_request = False
@@ -110,6 +112,31 @@ class Player:
                 except IndexError:
                     # --- Idle State: Queue is empty ---
                     # --- 待機状態: キューが空です ---
+
+                    # [EN] The queue is empty. First, check if we should loop the entire history.
+                    # [JP] キューが空です。まず、履歴全体をループすべきか確認します。
+                    if self.loop_mode == 'queue' and self.history:
+                        print(f"INFO: Queue ended in guild {self.guild_id}. Looping back from history.")
+                        
+                        # [EN] Refill the queue from the history.
+                        # [JP] 履歴からキューを再補充します。
+                        self.queue.extend(self.history)
+                        self.history.clear()
+                        
+                        # [EN] A small, user-friendly message.
+                        # [JP] ユーザーフレンドリーな、ちょっとしたメッセージ。
+                        if self.text_channel:
+                            try:
+                                await self.text_channel.send("🔁 Reached the end of the queue, looping back to the start.")
+                            except discord.HTTPException:
+                                pass # Failsafe
+                        
+                        # [EN] Restart the loop immediately to play the first track of the new queue.
+                        # [JP] 新しいキューの最初の曲を再生するために、即座にループを再開します。
+                        continue
+
+                    # [EN] If not looping, proceed to the normal idle state logic that you already have.
+                    # [JP] ループしない場合は、あなたが既に持っている、通常の待機状態のロジックに進みます。
                     self.is_playing = False
                     
                     # 最後に再生していた曲 (current_track) は、既にループ先頭の
@@ -169,7 +196,6 @@ class Player:
                     # 曲が終了するか、停止/スキップされるまでここで待機します。
                     await self.song_finished.wait()
                     
-                    # ▼▼▼ 最後の聖剣 ▼▼▼
                     # [EN] Song has finished. The VERY FIRST thing to do is to kill the updater for this track.
                     # [EN] This prevents zombie tasks when switching tracks quickly.
                     # [JP] 曲が終了しました。最初に行うべきことは、この曲のアップデーターを完全に停止させることです。
@@ -603,7 +629,7 @@ class Player:
         embed = discord.Embed(title="Now playing music:", color=discord.Color.green())
         if track.get('thumbnail'): embed.set_thumbnail(url=track.get('thumbnail'))
         embed.description = (f"**By:** {track.get('uploader', 'Unknown Artist')}\n\u200b\n"
-                           f"{status_icon}:\n**{track.get('title', 'Unknown Title')}**\n{url_text}")
+                            f"{status_icon}:\n**{track.get('title', 'Unknown Title')}**\n{url_text}")
 
         current_time_sec = self.get_current_playback_time()
         total_time_sec = track.get('duration', 0)
