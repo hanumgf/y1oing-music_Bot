@@ -90,8 +90,10 @@ python -m venv venv
 ```
 
 Activate the virtual environment:
-- **Windows:** `.\venv\Scripts\activate`
-- **macOS / Linux:** `source venv/bin/activate`
+- **Windows:**
+  ```.\venv\Scripts\activate```
+- **macOS / Linux:**
+  ```source venv/bin/activate```
 
 ### Step 3: Install Dependencies (依存関係のインストール)
 ```sh
