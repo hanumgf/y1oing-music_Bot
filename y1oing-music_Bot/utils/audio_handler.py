@@ -57,14 +57,31 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
         else:
             entry = info
             
-            # Ensure the stream URL is included for single tracks
+            # [EN] Thoroughly search for a playable stream URL within the complex format list.
+            # [JP] 複雑なフォーマットリストの中から、再生可能なストリームURLを徹底的に探索します。
+            
             stream_url = None
-            for f in info.get('formats', []):
-                if f.get('acodec') != 'none' and f.get('vcodec') == 'none':
-                    stream_url = f.get('url')
-                    break
+            
+            # Priority 1: Check the top-level 'url' key first.
+            if 'url' in entry:
+                stream_url = entry['url']
+            
+            # Priority 2: If not found, search the formats list for the best audio-only stream.
             if not stream_url:
-                stream_url = info.get('url')
+                best_audio_format = None
+                for f in entry.get('formats', []):
+                    # Ideal format is audio-only ('vcodec'=='none') and has a URL.
+                    if f.get('vcodec') == 'none' and f.get('url'):
+                        # Prefer formats with a higher audio bitrate (abr).
+                        if best_audio_format is None or f.get('abr', 0) > best_audio_format.get('abr', 0):
+                            best_audio_format = f
+                
+                if best_audio_format:
+                    stream_url = best_audio_format.get('url')
+
+            # Priority 3: As a last resort, just take the URL from the format yt-dlp pre-selected.
+            if not stream_url:
+                stream_url = entry.get('url') # This might be the same as the first check, but it's a safe fallback.
 
             return {
                 'id': entry.get('id'), 'title': entry.get('title', 'Unknown'),
@@ -87,7 +104,7 @@ def search_youtube_sync(query: str, max_results: int = 10):
     自動生成される「Mix」プレイリストを結果から除外します。
     """
     YDL_OPTIONS = {
-        'format': 'bestaudio/best',
+        'format': 'm4a/bestaudio/best',
         'quiet': True,
         'no_warnings': True,
         'default_search': f'ytsearch{max_results}',
@@ -149,18 +166,12 @@ class AudioHandler:
         """
         audio_url = track_info.get('url')
         
-        # Fallback: If the URL is missing, try to refresh the track info once.
-        # フォールバック: URLが見つからない場合、一度だけ曲情報の再取得を試みます。
+        # If the URL is still missing, it means get_track_info failed to find one.
+        # We will not retry here to prevent timeouts.
+        # [JP] もしURLがまだ見つからない場合、それはget_track_infoがURLを見つけられなかったということです。
+        # [JP] タイムアウトを防ぐため、ここでは再試行しません。
         if not audio_url:
-            print(f"Stream URL missing in initial info for {track_info.get('title')}. Retrying once...")
-            track_info_fresh, error = await self.get_track_info(track_info['webpage_url'])
-            if error:
-                print(f"Error refreshing track info: {error}")
-                return None
-            audio_url = track_info_fresh.get('url')
-
-        if not audio_url:
-            print(f"FATAL: Could not get a stream URL for {track_info.get('title')}")
+            print(f"FATAL: A playable stream URL could not be found for {track_info.get('title')}")
             return None
 
         FFMPEG_OPTIONS = {

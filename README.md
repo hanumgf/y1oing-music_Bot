@@ -170,7 +170,7 @@ Restart the bot, and slash commands will be available immediately on your test s
 | **Playlist (Personal)**   | `/playlist [...]`               | Manages your personal playlists (個人プレイリストの管理).                |
 | **Playlist (Server)**     | `/serverplaylist [...]`         | Manages shared server playlists (サーバー共有プレイリストの管理).           |
 | **Settings**              | `/volume`, `/loop`, `/profile`  | Manages user and playback settings (設定の管理).                   |
-| **Utility**               | `/help`, `/about`, `/feedback`  | Provides help and utility functions (ヘルプとユーティリティ).               |
+| **Utility**               | `/help`, `/feedback`  | Provides help and utility functions (ヘルプとユーティリティ).               |
 
 ---
 

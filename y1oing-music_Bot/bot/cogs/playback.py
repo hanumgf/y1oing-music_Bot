@@ -180,26 +180,60 @@ class PlaybackCog(commands.Cog):
     @app_commands.command(name="play", description="Plays a song or adds it to the queue.")
     @app_commands.describe(query="A YouTube URL or a search query.")
     @checks.cooldown(1, 5.0, key=lambda i: i.guild.id)
-    async def play(self, interaction: discord.Interaction, query: str,):
-        # Reject playlist URLs for this command.
-        # このコマンドではプレイリストのURLを拒否します。
-        if 'list=' in query:
-            await interaction.response.defer(ephemeral=True)
-            await interaction.followup.send("❌ Playlist URLs are not supported with /play. Please use a single song URL or search query.", ephemeral=True)
-            return
-
+    async def play(self, interaction: discord.Interaction, query: str):
+        
+        # [EN] Defer the interaction immediately to handle all possible paths without timeouts.
+        # [JP] タイムアウトなしですべての可能性のあるパスを処理するため、即座にインタラクションをdeferします。
         await interaction.response.defer(ephemeral=True)
+        
         player = self.get_or_create_player(interaction)
+
+        # [EN] This is the final alchemy.
+        # [JP] これが最後の錬金術です。
+
+        final_query = query # [EN] The URL or search term we will ultimately use.
+        
+        # 1. First, check if the query is a direct URL. If it is, we also check for playlists.
+        # [JP] まず、クエリが直接のURLかを確認します。URLの場合は、プレイリストチェックも行います。
+        if self.audio_handler.is_youtube_url(query):
+            if 'list=' in query:
+                await interaction.followup.send("❌ Playlist URLs are not supported with /play. Use `/playlist_add` instead.", ephemeral=True)
+                return
+        
+        # 2. If it's a search term (not a URL), use the fast `search_youtube` to find the top result.
+        # [JP] もし検索ワード（URLではない）の場合、高速な`search_youtube`で一番上の結果を見つけます。
+        else:
+            print(f"INFO: /play received a search term '{query}'. Searching for top result...")
+            entries, error = await self.audio_handler.search_youtube(query, max_results=1)
+            
+            if error or not entries:
+                await interaction.followup.send(f"❌ Could not find any results for `{query}`.", ephemeral=True)
+                return
+            
+            # 3. Use the URL of the top result as our new, definitive query.
+            # [JP] 見つかった一番上の結果のURLを、新しい、そして決定的なクエリとして使います。
+            top_result = entries[0]
+            final_query = top_result.get('webpage_url') or top_result.get('url')
+            
+            if not final_query:
+                await interaction.followup.send(f"❌ Found a result for `{query}`, but it has no valid URL.", ephemeral=True)
+                return
+
+        # 4. Now, proceed with a guaranteed valid URL.
+        # [JP] これで、保証された有効なURLで処理を進めます。
 
         # Ensure the bot is connected to a voice channel.
         # ボットがボイスチャンネルに接続していることを確認します。
         success, _ = await player.connect(interaction)
         if not success:
+            # connect() handles its own response on failure, and we've already deferred.
             return
         
         # Delegate the track adding process to the player.
         # 曲の追加処理をプレイヤーに委任します。
-        reception_message = await player.add_to_queue(interaction, query, allow_playlist=False)
+        # The allow_playlist=False is correctly set here.
+        # [JP] allow_playlist=False はここで正しく設定されています。
+        reception_message = await player.add_to_queue(interaction, final_query, allow_playlist=False)
         await interaction.followup.send(reception_message)
 
 
