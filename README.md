@@ -79,6 +79,8 @@ Follow these steps to get the bot running in your own environment.
 ### Step 1: Clone the Repository (リポジトリのクローン)
 ```sh
 git clone https://github.com/hanumgf/y1oing-music_Bot.git
+```
+```sh
 cd y1oing-music_Bot
 ```
 
@@ -176,4 +178,4 @@ Restart the bot, and slash commands will be available immediately on your test s
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-Created by `y1.ing`
+Created by [`y1.ing`](https://discord.com/users/1030100948003065866)
