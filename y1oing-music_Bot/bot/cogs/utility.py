@@ -12,6 +12,9 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 from discord import app_commands
+import json
+import os
+from datetime import datetime, timedelta
 
 
 # --- Help Command Data Store ---
@@ -97,6 +100,10 @@ HELP_DATA = {
 
 
 
+# feedback command customecooldown 
+feedback_timestamps: dict[int, list[datetime]] = {}
+
+
 # --- UI Components for Help Command ---
 
 class HelpSelect(discord.ui.Select):
@@ -155,6 +162,41 @@ class HelpView(discord.ui.View):
         self.add_item(GoHomeButton())
 
 
+class FeedbackCooldown:
+    """A custom cooldown for the feedback command (4 times per day)."""
+    def __init__(self, rate: int = 4, per: float = 86400): # 86,400 seconds = 24 hours
+        self.rate = rate
+        self.per = timedelta(seconds=per)
+        self.bucket = app_commands.BucketType.user
+
+    def __call__(self) -> app_commands.check:
+        async def predicate(interaction: discord.Interaction) -> bool:
+            # Get current time
+            current_time = datetime.now()
+            user_id = interaction.user.id
+            
+            # Get the user's timestamp list (if not, empty list)
+            timestamps = feedback_timestamps.get(user_id, [])
+            
+            # Remove old timestamps that have been over 24 hours old from the list
+            valid_timestamps = [t for t in timestamps if current_time - t < self.per]
+            
+            # Check if the number of times you use within the last 24 hours has reached the limit
+            if len(valid_timestamps) >= self.rate:
+                # 次に使えるまでの時間を計算
+                retry_after = (valid_timestamps[0] + self.per) - current_time
+                # Raise a custom error
+                raise app_commands.CommandOnCooldown(self.bucket, retry_after.total_seconds())
+            
+            # If the limit is not reached, record the current time.
+            valid_timestamps.append(current_time)
+            feedback_timestamps[user_id] = valid_timestamps
+            
+            # check passed, allow the command to run
+            return True
+        return app_commands.check(predicate)
+
+
 
 # --- Cog Definition ---
 
@@ -162,6 +204,20 @@ class UtilityCog(commands.Cog):
     """Cog for utility commands like /help."""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.config_path = "config.json"
+
+    # --- Load and Save Config Methods ---
+    def load_config(self) -> dict:
+        """設定ファイルを読み込む"""
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {} # ファイルが存在しない場合は空の辞書を返す
+
+    def save_config(self, data: dict):
+        """設定ファイルに書き込む"""
+        with open(self.config_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4)
 
 
     @app_commands.command(name="help", description="Shows how to use y1oing BOT.")
@@ -179,6 +235,80 @@ class UtilityCog(commands.Cog):
         embed.set_footer(text=f"{self.bot.user.name} - Sound Perfected.")
         
         await interaction.response.send_message(embed=embed, view=HelpView(), ephemeral=True)
+
+
+    @app_commands.command(name="feedback", description="Send feedback or report a bug to the developer.")
+    @app_commands.describe(message="Your feedback message.")
+    @FeedbackCooldown() # ◀ Call homemade stuff instead of ready-made cooldown
+    async def feedback(self, interaction: discord.Interaction, message: str):
+        
+        config = self.load_config()
+        recipient_id_str = config.get("feedback_recipient_id")
+
+        # --- [追加] 実行時チェック ---
+        # 1. IDが設定されているか、かつデフォルトのままではないか
+        if not recipient_id_str or not recipient_id_str.isdigit() or "Your_User_ID_Here" in recipient_id_str:
+            print(f"--- FEEDBACK ERROR ---")
+            print(f"Feedback from {interaction.user} failed.")
+            print(f"Reason: feedback_recipient_id is not configured correctly in config.json.")
+            print(f"Current value: {recipient_id_str}")
+            print(f"----------------------")
+            await interaction.response.send_message("❌ Sorry, the feedback feature is currently unavailable. The developer has been notified.", ephemeral=True)
+            return
+
+        try:
+            # 2. IDが、実在するDiscordユーザーのものか
+            recipient_id = int(recipient_id_str)
+            recipient = await self.bot.fetch_user(recipient_id)
+        except (discord.NotFound, ValueError):
+            print(f"--- FEEDBACK ERROR ---")
+            print(f"Feedback from {interaction.user} failed.")
+            print(f"Reason: The user ID '{recipient_id_str}' set as feedback_recipient_id could not be found.")
+            print(f"----------------------")
+            await interaction.response.send_message("❌ Sorry, the feedback feature is currently unavailable. The developer has been notified.", ephemeral=True)
+            return
+
+        # 開発者に送信するDMのEmbedを作成
+        embed = discord.Embed(
+            title="📬 New Feedback Received",
+            description=message,
+            color=discord.Color.orange(),
+            timestamp=interaction.created_at
+        )
+        embed.set_author(
+            name=f"From: {interaction.user.display_name} ({interaction.user.id})",
+            icon_url=interaction.user.display_avatar.url
+        )
+        if interaction.guild:
+            embed.add_field(name="Sent From Server", value=f"{interaction.guild.name} ({interaction.guild.id})")
+
+        try:
+            # DMを送信
+            await recipient.send(embed=embed)
+            
+            # 送信成功をユーザーに通知
+            await interaction.response.send_message("✅ Thank you! Your feedback has been sent successfully.", ephemeral=True)
+        except discord.Forbidden:
+            # 開発者がDMをブロックしているなどの理由で送信失敗
+            await interaction.response.send_message("❌ Sorry, I couldn't deliver your message to the developer.", ephemeral=True)
+
+
+    @app_commands.command(name="set_feedback_recipient", description="[Owner Only] Set the user who receives feedback.")
+    @app_commands.describe(user="The user who will receive feedback DMs.")
+    @app_commands.check(commands.is_owner()) # Botのオーナーだけが実行できる
+    async def set_feedback_recipient(self, interaction: discord.Interaction, user: discord.User):
+        
+        config = self.load_config()
+        config["feedback_recipient_id"] = str(user.id)
+        self.save_config(config)
+
+        await interaction.response.send_message(f"✅ Feedback will now be sent to **{user.display_name}**.", ephemeral=True)
+
+    # Botオーナーチェックに失敗した時のエラーメッセージ
+    @set_feedback_recipient.error
+    async def on_set_feedback_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            await interaction.response.send_message("❌ Only the bot owner can use this command.", ephemeral=True)
 
 
 

@@ -17,6 +17,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import json
 import os
 
 
@@ -42,6 +43,37 @@ class Y1oingBot(commands.Bot):
         # スラッシュコマンドでは `command_prefix` は不要です。
         intents = discord.Intents.all()
         super().__init__(command_prefix="?", intents=intents)
+
+        owner_ids = []
+        try:
+            with open("config.json", 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                
+                # --- [追加] 起動時チェック ---
+                owner_ids_str = config.get("owner_ids", [])
+                if not owner_ids_str or "Your_User_ID_Here" in owner_ids_str:
+                    print("="*50)
+                    print("!!! WARNING: Bot owner ID is not set in config.json! !!!")
+                    print("!!! Some commands like /set_feedback_recipient will not be usable. !!!")
+                    print("="*50)
+                else:
+                    # IDが数字であることを確認してから変換する
+                    owner_ids = [int(id_str) for id_str in owner_ids_str if id_str.isdigit()]
+                    if not owner_ids:
+                        print("="*50)
+                        print("!!! WARNING: owner_ids in config.json contains invalid values! !!!")
+                        print("="*50)
+                
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            print("="*50)
+            print(f"!!! ERROR: Could not load config.json: {e} !!!")
+            print("!!! Owner-only commands will not be available. !!!")
+            print("="*50)
+
+        super().__init__(
+            intents=intents,
+            owner_ids=set(owner_ids)
+        )
 
         # Set up the global error handler for all application commands.
         # This is the standard way to assign an error handler within a class.
