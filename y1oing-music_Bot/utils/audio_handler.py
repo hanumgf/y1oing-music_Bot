@@ -50,15 +50,12 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
         
         # If the result is a playlist (has 'entries'), return the whole info dict.
         # Otherwise, format it as a single track object as before.
-        # [JP] もし結果がプレイリスト（'entries'を持つ）なら、info辞書をそのまま返す。
-        # [JP] そうでなければ、これまで通り単一の曲オブジェクトに整形して返す。
         if 'entries' in info:
             return info, None # Return the full playlist data
         else:
             entry = info
             
-            # [EN] Thoroughly search for a playable stream URL within the complex format list.
-            # [JP] 複雑なフォーマットリストの中から、再生可能なストリームURLを徹底的に探索します。
+            # Thoroughly search for a playable stream URL within the complex format list.
             
             stream_url = None
             
@@ -168,8 +165,6 @@ class AudioHandler:
         
         # If the URL is still missing, it means get_track_info failed to find one.
         # We will not retry here to prevent timeouts.
-        # [JP] もしURLがまだ見つからない場合、それはget_track_infoがURLを見つけられなかったということです。
-        # [JP] タイムアウトを防ぐため、ここでは再試行しません。
         if not audio_url:
             print(f"FATAL: A playable stream URL could not be found for {track_info.get('title')}")
             return None

@@ -62,8 +62,7 @@ class PlaylistCog(commands.Cog):
         # Check if the result is a playlist or a single track.
         if 'entries' in full_data:
             # --- Filtration Filter ---
-            # [EN] Helper function to extract only the data we need.
-            # [JP] 必要なデータだけを抽出するためのヘルパー関数。
+            # Helper function to extract only the data we need.
             def extract_core_info(entry):
                 return {
                     'title': entry.get('title', 'Unknown Title'),
@@ -73,8 +72,7 @@ class PlaylistCog(commands.Cog):
                     'thumbnail': entry.get('thumbnail'),
                 }
 
-            # [EN] Apply the filter to each track and also filter out YouTube Mixes.
-            # [JP] 各トラックにフィルターを適用し、YouTube Mixも除外します。
+            # Apply the filter to each track and also filter out YouTube Mixes.
             playlist_tracks = [
                 extract_core_info(track) for track in full_data['entries']
                 if track and not track.get('id', '').startswith('RD')
@@ -97,8 +95,7 @@ class PlaylistCog(commands.Cog):
                 user=interaction.user
             )
         else:
-            # [EN] Even for a single track, filter it to keep data consistent.
-            # [JP] 単一の曲でも、データの一貫性を保つためにフィルターをかけます。
+            # Even for a single track, filter it to keep data consistent.
             core_track_info = {
                 'title': full_data.get('title', 'Unknown Title'),
                 'uploader': full_data.get('uploader', 'Unknown Artist'),

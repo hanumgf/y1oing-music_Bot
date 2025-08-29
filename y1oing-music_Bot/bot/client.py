@@ -39,14 +39,17 @@ class Y1oingBot(commands.Bot):
     def __init__(self):
         # Initialize the bot with all intents enabled for full functionality.
         # `command_prefix` is not needed for slash commands.
-        # 全ての機能を利用するため、全てのIntentsを有効にしてボットを初期化します。
-        # スラッシュコマンドでは `command_prefix` は不要です。
         intents = discord.Intents.all()
         super().__init__(command_prefix="?", intents=intents)
 
         owner_ids = []
         try:
-            with open("config.json", 'r', encoding='utf-8') as f:
+            # 1. このファイル(__file__)の絶対パスを取得
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            # client.pyからは2階層上
+            config_path = os.path.join(script_dir, '..', '..', 'config.json')
+
+            with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 
                 # --- [追加] 起動時チェック ---
@@ -71,14 +74,13 @@ class Y1oingBot(commands.Bot):
             print("="*50)
 
         super().__init__(
+            command_prefix="!y1oing_unused_prefix!",
             intents=intents,
             owner_ids=set(owner_ids)
         )
 
         # Set up the global error handler for all application commands.
         # This is the standard way to assign an error handler within a class.
-        # 全てのアプリケーションコマンドに対するグローバルエラーハンドラを設定します。
-        # これはクラス内でエラーハンドラを割り当てる標準的な方法です。
         self.tree.on_error = self.on_app_command_error
 
 
@@ -91,7 +93,6 @@ class Y1oingBot(commands.Bot):
         様々な種類のコマンドエラーを捕捉し、処理します。
         """
         # Handle command cooldown errors.
-        # コマンドがクールダウン中のエラーを処理します。
         if isinstance(error, app_commands.errors.CommandOnCooldown):
             cooldown_time = round(error.retry_after, 2)
             await interaction.response.send_message(
@@ -100,8 +101,6 @@ class Y1oingBot(commands.Bot):
             )
             return
             
-        # Handle missing permissions errors.
-        # 実行に必要な権限が不足しているエラーを処理します。
         if isinstance(error, app_commands.errors.MissingPermissions):
             await interaction.response.send_message(
                 f"❌ You need the following permissions to run this command: `{'`, `'.join(error.missing_permissions)}`",
@@ -109,25 +108,15 @@ class Y1oingBot(commands.Bot):
             )
             return
 
-        # Handle other generic check failures.
-        # その他の汎用的なチェック失敗を処理します。
         if isinstance(error, app_commands.errors.CheckFailure):
             await interaction.response.send_message("❌ You do not meet the conditions to run this command.", ephemeral=True)
             return
 
-        # Handle unexpected errors and log them.
-        # A generic message is sent to the user to avoid exposing implementation details.
-        # 予期しないエラーを処理し、コンソールにログを出力します。
-        # 実装の詳細を隠すため、ユーザーには汎用的なメッセージを送信します。
         original_error = getattr(error, 'original', error)
         print(f"Unhandled error in command '{interaction.command.name}': {original_error}")
         
         error_message = "An unexpected error occurred while executing the command. Please report this to the developer."
         
-        # Try to send a response or a followup message.
-        # This handles cases where the interaction might have already been responded to.
-        # レスポンスまたはフォローアップメッセージの送信を試みます。
-        # これにより、インタラクションが既に応答済みの場合にも対応できます。
         try:
             if interaction.response.is_done():
                 await interaction.followup.send(error_message, ephemeral=True)
@@ -178,7 +167,6 @@ class Y1oingBot(commands.Bot):
         print(f"Logged in as {self.user} (ID: {self.user.id})")
         
         # Set the bot's presence (status and activity).
-        # ボットのプレゼンス（ステータスとアクティビティ）を設定します。
         activity = discord.Activity(type=discord.ActivityType.listening, name="PLAY | Sound Perfected")
         await self.change_presence(status=discord.Status.online, activity=activity)
         

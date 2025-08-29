@@ -50,6 +50,7 @@ class Player:
         self.skip_requested = False
         self.is_previous_request = False
         self.is_cleaning_up = False
+        self.was_stopped = False
 
         # --- Synchronization & Timing ---
         self.song_finished = asyncio.Event()
@@ -87,7 +88,6 @@ class Player:
                 self.queue_added.clear()
                 
                 # [Post-Playback Phase] Handle the previously finished track based on state flags.
-                # [再生後処理フェーズ] 状態フラグに基づき、直前に終了した曲を処理します。
                 if self.current_track:
                     if self.is_previous_request:
                         self.queue.appendleft(self.current_track)
@@ -96,52 +96,44 @@ class Player:
                     elif self.skip_requested:
                         self.history.append(self.current_track)
                     else: # Natural song end
-                        # Queue Loopの判定はここで行わない。Track Loopと通常の終了だけを処理する。
                         if self.loop_mode == 'track': 
                             self.queue.appendleft(self.current_track)
-                        else: # loop_modeが'off'または'queue'の場合、一律で履歴に入れる
+                        else:
                             self.history.append(self.current_track)
 
                 self.skip_requested = False
                 self.is_previous_request = False
 
                 # [Next Track Fetching Phase] Try to get the next track from the queue.
-                # [次曲取得フェーズ] キューから次の曲を取得しようと試みます。
                 try:
                     self.current_track = self.queue.popleft()
                 except IndexError:
                     # --- Idle State: Queue is empty ---
                     # --- 待機状態: キューが空です ---
 
-                    # [EN] The queue is empty. First, check if we should loop the entire history.
-                    # [JP] キューが空です。まず、履歴全体をループすべきか確認します。
+                    # The queue is empty. First, check if we should loop the entire history.
                     if self.loop_mode == 'queue' and self.history:
                         print(f"INFO: Queue ended in guild {self.guild_id}. Looping back from history.")
                         
-                        # [EN] Refill the queue from the history.
-                        # [JP] 履歴からキューを再補充します。
+                        # Refill the queue from the history.
                         self.queue.extend(self.history)
                         self.history.clear()
                         
-                        # [EN] A small, user-friendly message.
-                        # [JP] ユーザーフレンドリーな、ちょっとしたメッセージ。
+                        # A small, user-friendly message.
                         if self.text_channel:
                             try:
                                 await self.text_channel.send("🔁 Reached the end of the queue, looping back to the start.")
                             except discord.HTTPException:
                                 pass # Failsafe
                         
-                        # [EN] Restart the loop immediately to play the first track of the new queue.
-                        # [JP] 新しいキューの最初の曲を再生するために、即座にループを再開します。
+                        # Restart the loop immediately to play the first track of the new queue.
                         continue
 
-                    # [EN] If not looping, proceed to the normal idle state logic that you already have.
-                    # [JP] ループしない場合は、あなたが既に持っている、通常の待機状態のロジックに進みます。
+                    # If not looping, proceed to the normal idle state logic that you already have.
                     self.is_playing = False
                     
                     # 最後に再生していた曲 (current_track) は、既にループ先頭の
                     # [Post-Playback Phase] で履歴に追加されているはずなので、ここでは何もしない。
-                    # if self.current_track: self.history.append(self.current_track) # ← この行を削除
                     self.current_track = None
                     
                     if self.history:
@@ -165,7 +157,6 @@ class Player:
                     continue # Restart the loop to process the new track.
 
                 # [Playback Preparation Phase] A track is available.
-                # [再生準備フェーズ] 再生可能な曲があります。
                 if self.autoleave_task: self.autoleave_task.cancel(); self.autoleave_task = None
                 
                 source = await self.audio_handler.create_source(self.current_track, volume=self.volume)
@@ -175,7 +166,6 @@ class Player:
                     continue
 
                 # [Playback Execution Phase] Play the audio source.
-                # [再生実行フェーズ] オーディオソースを再生します。
                 if self.voice_client and self.voice_client.is_connected():
                     self.is_playing = True
                     self.playback_start_time = time.time(); self.paused_time = 0; self.paused_duration = 0
@@ -193,19 +183,15 @@ class Player:
                     self.voice_client.play(source, after=after_playback)
                     
                     # Wait here until the song finishes or is stopped/skipped.
-                    # 曲が終了するか、停止/スキップされるまでここで待機します。
                     await self.song_finished.wait()
                     
-                    # [EN] Song has finished. The VERY FIRST thing to do is to kill the updater for this track.
-                    # [EN] This prevents zombie tasks when switching tracks quickly.
-                    # [JP] 曲が終了しました。最初に行うべきことは、この曲のアップデーターを完全に停止させることです。
-                    # [JP] これにより、曲が高速で切り替わる際のゾンビ・タスクを防ぎます。
+                    # Song has finished. The VERY FIRST thing to do is to kill the updater for this track.
+                    # This prevents zombie tasks when switching tracks quickly.
                     if self.panel_update_task and not self.panel_update_task.done():
                         self.panel_update_task.cancel()
                         self.panel_update_task = None
                     
-                    # [EN] Now it is safe to declare that playback has stopped.
-                    # [JP] これで、再生が停止したと安全に宣言できます。
+                    # Now it is safe to declare that playback has stopped.
                     self.is_playing = False
                         
         except asyncio.CancelledError:
@@ -233,14 +219,12 @@ class Player:
         time_until_expected_end = self.expected_end_time - time.time()
         
         # If there are more than 5 seconds left, it was likely an error. Ignore it.
-        # 終了予定時刻まで5秒以上残っている場合、エラーの可能性が高いので無視します。
         if time_until_expected_end > 5:
             print(f"INFO: after_playback called prematurely in guild {self.guild_id}. Ignoring.")
             await self.ensure_voice_client_alive()
             return
 
         # Otherwise, the song finished normally.
-        # それ以外の場合は、曲は正常に終了しました。
         if not self.song_finished.is_set(): self.song_finished.set()
 
 
@@ -250,10 +234,9 @@ class Player:
         end the current song instead of a full cleanup.
         """
         await asyncio.sleep(2)
-        # プレーヤーが再生中であり、かつボイスクライアントが存在しない、または切断されている場合
         if self.is_playing and (not self.voice_client or not self.voice_client.is_connected()):
             print(f"ERROR: VoiceClient disconnected during playback in guild {self.guild_id}. Ending current song.")
-            # フルクリーンアップではなく、現在の曲の終了を通知する
+            # Notify the end of the current song, not the full cleanup
             if not self.song_finished.is_set():
                 self.song_finished.set()
 
@@ -261,27 +244,57 @@ class Player:
     # --- State and Connection Management ---
 
     async def connect(self, interaction: discord.Interaction):
-        """Connects to the user's voice channel and stores the interaction's text channel."""
+        """Connects to the user's voice channel with a timeout and error handling."""
         if not interaction.user.voice:
+            message = "You must be in a voice channel first."
             try:
-                await interaction.response.send_message("You must be in a voice channel first.", ephemeral=True)
-            except discord.errors.InteractionResponded:
-                await interaction.followup.send("You must be in a voice channel first.", ephemeral=True)
+                if interaction.response.is_done():
+                    await interaction.followup.send(message, ephemeral=True)
+                else:
+                    await interaction.response.send_message(message, ephemeral=True)
+            except discord.errors.NotFound:
+                pass 
             return False, "..."
         
         channel = interaction.user.voice.channel
         self.text_channel = interaction.channel
+        
+        try:
+            if self.voice_client:
+                await self.voice_client.move_to(channel, timeout=10.0)
+            else:
+                self.voice_client = await channel.connect(timeout=10.0)
 
-        is_new_connection = not self.voice_client
-        if self.voice_client:
-            await self.voice_client.move_to(channel)
-        else:
-            self.voice_client = await channel.connect()
+            if not hasattr(self, '_profile_applied'): # Flags to apply only once
+                await self.apply_profile_settings(interaction.user.id)
+                self._profile_applied = True
 
-        if is_new_connection:
-            await self.apply_profile_settings(interaction.user.id)
-
-        return True, f"Connected to `{channel.name}`."
+            return True, f"Connected to `{channel.name}`."
+            
+        except asyncio.TimeoutError:
+            message = "Failed to connect to the voice channel in time. Please try again."
+            try:
+                if interaction.response.is_done():
+                    await interaction.followup.send(message, ephemeral=True)
+                else:
+                    await interaction.response.send_message(message, ephemeral=True)
+            except discord.errors.NotFound:
+                pass
+            await self.cleanup()
+            return False, "..."
+            
+        except Exception as e:
+            print(f"An unexpected error occurred during connect: {e}")
+            message = "An unknown error occurred while trying to connect."
+            try:
+                if interaction.response.is_done():
+                    await interaction.followup.send(message, ephemeral=True)
+                else:
+                    await interaction.response.send_message(message, ephemeral=True)
+            except discord.errors.NotFound:
+                pass
+            await self.cleanup()
+            return False, "..."
 
 
     async def disconnect(self):
@@ -314,13 +327,13 @@ class Player:
         print(f"Cleaning up Player for guild {self.guild_id}...")
         self.is_playing = False
 
-        # 既存のパネルがあれば編集し、なければ何もしない（新しいメッセージは送らない）
+        # Edit existing panels, and do nothing if they don't (do not send new messages)
         if self.now_playing_message:
             try:
                 embed = discord.Embed(title="👋 See you!", description="Thanks for using the bot.", color=discord.Color.dark_grey())
                 await self.now_playing_message.edit(embed=embed, view=None)
             except (discord.NotFound, discord.HTTPException):
-                pass # 編集に失敗しても気にしない
+                pass #
 
         self.now_playing_message = None
 
@@ -359,39 +372,27 @@ class Player:
 
     async def stop(self):
         """
-        Signals the intent to stop playback entirely, clearing all queues and history.
-        The main loop will handle the state change and start the auto-leave timer.
-        
-        再生を完全に停止し、全キューと履歴をクリアする意図を通知します。
-        メインループが状態変化を処理し、自動退出タイマーを開始します。
+        Stops playback by clearing the queue and history, then gracefully ending
+        the current track using the same logic as the skip command.
         """
-        self.is_playing = False
+        if not self.is_playing and not self.queue:
+            return "There is nothing to stop."
+            
+        print(f"Stop command received for guild {self.guild_id}. Clearing data and stopping current track.")
+        
         self.queue.clear()
         self.history.clear()
         
-        tasks_to_cancel = [self.add_tracks_task, self.panel_update_task]
-        for task in tasks_to_cancel:
-            if task and not task.done(): task.cancel()
-
-        if self.now_playing_message:
-            try:
-                await self.now_playing_message.edit(embed=self.create_now_playing_embed(finished=True), view=self.get_current_view(finished=True))
-            except discord.NotFound: pass
+        self.loop_mode = 'off'
         
-            # Once you stop, you won't use this panel anymore, so forget about it.
-            # self.now_playing_message = None 
-        
-        self.stop_requested = True
-        if self.voice_client and (self.voice_client.is_playing() or self.voice_client.is_paused()):
+        self.skip_requested = True
+        if self.voice_client and self.is_playing:
             self.voice_client.stop()
         else:
-            self.song_finished.set()
-            
-        if self.voice_client and self.voice_client.is_connected():
-            if self.autoleave_task: self.autoleave_task.cancel()
-            self.autoleave_task = self.bot.loop.create_task(self.autoleave_timer())
+            self.queue_added.set()
 
-        return "⏹️ Stopped playback and cleared the queue. I will leave in 10 minutes if idle."
+        # message to return after cleanup
+        return "⏹️ Stopped playback and cleared the queue."
 
 
     def skip(self):
@@ -417,8 +418,6 @@ class Player:
         else:
             # If idle, the player_loop is waiting at `queue_added.wait()`.
             # We must set `queue_added` to wake it up.
-            # [JP] 待機中の場合、player_loopは`queue_added.wait()`で待っています。
-            # [JP] `queue_added`をセットして、ループを再開させる必要があります。
             self.queue_added.set()
 
         return "⏮️ Returning to the previous track..."
@@ -563,58 +562,48 @@ class Player:
 
     async def panel_updater(self):
         """[Background Task] Periodically updates the progress bar on the Now Playing panel."""
-        # [EN] Counter for consecutive network errors.
-        # [JP] 連続したネットワークエラーのカウンター。
+        # Counter for consecutive network errors.
         consecutive_errors = 0
         
         while self.is_playing:
             if self.now_playing_message and self.voice_client and self.voice_client.is_connected():
                 try:
-                    # [EN] Attempt to edit the panel.
-                    # [JP] パネルの編集を試みます。
+                    # Attempt to edit the panel.
                     await self.now_playing_message.edit(embed=self.create_now_playing_embed())
                     
-                    # [EN] If successful, reset the error counter.
-                    # [JP] 成功したら、エラーカウンターをリセットします。
+                    # If successful, reset the error counter.
                     consecutive_errors = 0
                     
                 except discord.HTTPException as e:
-                    # [EN] Handle HTTP-related errors (like 503 Service Unavailable).
-                    # [JP] HTTP関連のエラー（503 Service Unavailableなど）を処理します。
+                    # Handle HTTP-related errors (like 503 Service Unavailable).
                     print(f"Panel updater warning (HTTPException): {e.status} {e.text}")
                     consecutive_errors += 1
                     
-                    # [EN] If errors persist (e.g., 3 times in a row), assume the message is lost.
-                    # [JP] もしエラーが続くなら（例: 3回連続）、メッセージは失われたと判断します。
+                    # If errors persist (e.g., 3 times in a row), assume the message is lost.
                     if consecutive_errors >= 3:
                         print("Panel updater failed multiple times. Assuming message is lost.")
                         self.now_playing_message = None
                         break # Exit the loop.
                         
                 except discord.NotFound:
-                    # [EN] The message was deleted by a user. Stop trying to edit it.
-                    # [JP] メッセージがユーザーによって削除されました。編集を停止します。
+                    # The message was deleted by a user. Stop trying to edit it.
                     print("Panel updater stopped: Message was not found.")
                     self.now_playing_message = None
                     break # Exit the loop.
                     
                 except Exception as e:
-                    # [EN] Handle other unexpected errors.
-                    # [JP] その他の予期せぬエラーを処理します。
+                    # Handle other unexpected errors.
                     print(f"Panel updater encountered an unexpected error: {e}")
                     consecutive_errors += 1
                     if consecutive_errors >= 3:
                         self.now_playing_message = None
                         break
             else:
-                # [EN] Player is no longer in a state to update the panel.
-                # [JP] プレイヤーはパネルを更新できる状態にありません。
+                # Player is no longer in a state to update the panel.
                 break
 
-            # [EN] Wait for the next update cycle.
-            # [JP] 次の更新サイクルまで待機します。
-            await asyncio.sleep(10) # [EN] Increased sleep time to reduce API calls.
-                                    # [JP] APIコールを減らすためにスリープ時間を延長。
+            # Wait for the next update cycle.
+            await asyncio.sleep(10) # Increased sleep time to reduce API calls.
 
 
     def create_now_playing_embed(self, finished=False):

@@ -63,7 +63,6 @@ class PlaybackCog(commands.Cog):
             self.players[guild_id] = player
             
             # Start a background task to watch for the player's completion.
-            # プレイヤーの完了を監視するバックグラウンドタスクを開始します。
             self.bot.loop.create_task(self.player_watcher(player))
             print(f"New Player created for guild {guild_id}. Watcher started.")
             
@@ -96,7 +95,6 @@ class PlaybackCog(commands.Cog):
         ボイスチャンネルの状態変化を監視し、自動退出を管理します。
         """
         # Ignore state changes from the bot itself, unless it was disconnected by an admin.
-        # Bot自身の状態変化は無視しますが、管理者によって切断された場合は例外です。
         if member.bot and member.id == self.bot.user.id:
             if before.channel and not after.channel:
                 player = self.get_player(member)
@@ -113,7 +111,6 @@ class PlaybackCog(commands.Cog):
         human_members = [m for m in bot_channel.members if not m.bot]
         
         # Scenario 1: The bot is left alone in the channel.
-        # シナリオ1: Botがチャンネルに一人だけ残された場合。
         if len(human_members) == 0:
             if not player.empty_channel_leavetask or player.empty_channel_leavetask.done():
                 if player.text_channel:
@@ -121,7 +118,6 @@ class PlaybackCog(commands.Cog):
                 player.empty_channel_leavetask = self.bot.loop.create_task(self.empty_channel_leave_timer(player))
 
         # Scenario 2: Someone joins the channel where the bot was alone.
-        # シナリオ2: Botが一人だったチャンネルに誰かが参加した場合。
         else:
             if player.empty_channel_leavetask and not player.empty_channel_leavetask.done():
                 player.empty_channel_leavetask.cancel()
@@ -139,7 +135,6 @@ class PlaybackCog(commands.Cog):
         await asyncio.sleep(30)
         
         # Double-check if the channel is still empty before leaving.
-        # 退出する前にもう一度チャンネルが空か確認します。
         if player.voice_client and player.voice_client.is_connected():
             human_members = [m for m in player.voice_client.channel.members if not m.bot]
             if len(human_members) == 0:
@@ -160,7 +155,6 @@ class PlaybackCog(commands.Cog):
                 await interaction.response.send_message(message)
             except discord.errors.InteractionResponded:
                 # Handled if `player.connect` already sent a response.
-                # `player.connect`が既に応答を送信した場合の処理。
                 pass
 
 
@@ -182,26 +176,22 @@ class PlaybackCog(commands.Cog):
     @checks.cooldown(1, 5.0, key=lambda i: i.guild.id)
     async def play(self, interaction: discord.Interaction, query: str):
         
-        # [EN] Defer the interaction immediately to handle all possible paths without timeouts.
-        # [JP] タイムアウトなしですべての可能性のあるパスを処理するため、即座にインタラクションをdeferします。
+        # Defer the interaction immediately to handle all possible paths without timeouts.
         await interaction.response.defer(ephemeral=True)
         
         player = self.get_or_create_player(interaction)
 
-        # [EN] This is the final alchemy.
-        # [JP] これが最後の錬金術です。
+        # This is the final alchemy.
 
-        final_query = query # [EN] The URL or search term we will ultimately use.
+        final_query = query # The URL or search term we will ultimately use.
         
         # 1. First, check if the query is a direct URL. If it is, we also check for playlists.
-        # [JP] まず、クエリが直接のURLかを確認します。URLの場合は、プレイリストチェックも行います。
         if self.audio_handler.is_youtube_url(query):
             if 'list=' in query:
                 await interaction.followup.send("❌ Playlist URLs are not supported with /play. Use `/playlist_add` instead.", ephemeral=True)
                 return
         
         # 2. If it's a search term (not a URL), use the fast `search_youtube` to find the top result.
-        # [JP] もし検索ワード（URLではない）の場合、高速な`search_youtube`で一番上の結果を見つけます。
         else:
             print(f"INFO: /play received a search term '{query}'. Searching for top result...")
             entries, error = await self.audio_handler.search_youtube(query, max_results=1)
@@ -211,7 +201,6 @@ class PlaybackCog(commands.Cog):
                 return
             
             # 3. Use the URL of the top result as our new, definitive query.
-            # [JP] 見つかった一番上の結果のURLを、新しい、そして決定的なクエリとして使います。
             top_result = entries[0]
             final_query = top_result.get('webpage_url') or top_result.get('url')
             
@@ -220,19 +209,15 @@ class PlaybackCog(commands.Cog):
                 return
 
         # 4. Now, proceed with a guaranteed valid URL.
-        # [JP] これで、保証された有効なURLで処理を進めます。
 
         # Ensure the bot is connected to a voice channel.
-        # ボットがボイスチャンネルに接続していることを確認します。
         success, _ = await player.connect(interaction)
         if not success:
             # connect() handles its own response on failure, and we've already deferred.
             return
         
         # Delegate the track adding process to the player.
-        # 曲の追加処理をプレイヤーに委任します。
         # The allow_playlist=False is correctly set here.
-        # [JP] allow_playlist=False はここで正しく設定されています。
         reception_message = await player.add_to_queue(interaction, final_query, allow_playlist=False)
         await interaction.followup.send(reception_message)
 
@@ -335,7 +320,6 @@ class PlaybackCog(commands.Cog):
         player = self.get_or_create_player(interaction)
         
         # Display search results in an interactive view.
-        # 検索結果をインタラクティブなビューで表示します。
         view = SearchView(interaction, entries, player)
         embed = discord.Embed(
             title=f"🔎 Search Results: `{query}`",
@@ -376,7 +360,6 @@ class PlaybackCog(commands.Cog):
             await interaction.response.send_message(f"✅ Loop mode set to **{mode.name}**.")
             
             # Update the Now Playing panel to reflect the new loop state.
-            # 新しいループ状態を反映するために、再生パネルを更新します。
             await player.update_now_playing_panel()
         else:
             await interaction.response.send_message("Please start playback before setting a loop mode.", ephemeral=True)

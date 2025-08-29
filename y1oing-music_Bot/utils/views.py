@@ -60,7 +60,6 @@ class ControlPanelView(discord.ui.View):
         return True
 
 
-
     # --- Button Definitions ---
 
 
@@ -184,7 +183,7 @@ class ControlPanelView(discord.ui.View):
             profile_data['volume'] = new_volume_percent
             profile_cog.profile_manager.save_profile(interaction.user.id, profile_data)
         self.update_all_buttons()
-        await interaction.response.edit_message(view=self)
+        await interaction.edit_original_response(view=self)
 
 
     def update_all_buttons(self):
@@ -351,7 +350,6 @@ class TrackSelect(discord.ui.Select):
         selected_track_metadata = view.tracks[track_index]
         
         # Connect to VC if not already connected.
-        # まだ接続されていない場合はVCに接続します。
         success, _ = await view.player.connect(interaction)
         if not success:
             try:
@@ -361,7 +359,6 @@ class TrackSelect(discord.ui.Select):
             return
             
         # Add the selected track to the queue via the official player method.
-        # 公式のプレイヤーメソッドを介して、選択された曲をキューに追加します。
         video_url = selected_track_metadata.get('url') or selected_track_metadata.get('webpage_url')
         if not video_url:
             await interaction.followup.send("❌ Could not find the URL for the selected track.", ephemeral=True)
@@ -370,5 +367,4 @@ class TrackSelect(discord.ui.Select):
         reception_message = await view.player.add_to_queue(interaction, video_url)
         
         # Display the result and remove the search panel.
-        # 結果を表示し、検索パネルを削除します。
         await view.interaction.edit_original_response(content=reception_message, view=None, embed=None)

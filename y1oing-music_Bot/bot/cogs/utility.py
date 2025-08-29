@@ -204,7 +204,10 @@ class UtilityCog(commands.Cog):
     """Cog for utility commands like /help."""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.config_path = "config.json"
+        # 1. Get the absolute path to this file (__file__)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # 2. Constructs an absolute path to `config.json`, located three levels above (`..`)
+        self.config_path = os.path.join(script_dir, '..', '..', '..', 'config.json')
 
     # --- Load and Save Config Methods ---
     def load_config(self) -> dict:
@@ -239,7 +242,7 @@ class UtilityCog(commands.Cog):
 
     @app_commands.command(name="feedback", description="Send feedback or report a bug to the developer.")
     @app_commands.describe(message="Your feedback message.")
-    @FeedbackCooldown() # ◀ Call homemade stuff instead of ready-made cooldown
+    @app_commands.checks.cooldown(4, 86400.0, key=lambda i: i.user.id)
     async def feedback(self, interaction: discord.Interaction, message: str):
         
         config = self.load_config()
