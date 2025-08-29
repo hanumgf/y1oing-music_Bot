@@ -1,50 +1,169 @@
-# Project Documentation: y1oing BOT
+# y1oing BOT
 
-This document provides a comprehensive overview of the design, architecture, and features for the **y1oing BOT** project.
-このドキュメントは、**y1oing BOT** プロジェクトの設計、アーキテクチャ、そして機能の全体像を解説するものです。
+> "Sound Perfected, Experience Redefined."
 
-## 1. Project Philosophy & Goals
+[![Status](https://img.shields.io/badge/status-released-success.svg)]()
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
-### 1.1. Motivation
-This project was born out of a determination to succeed where previous attempts at building a music bot had failed. It is a response to the current landscape of music bots, which, while feature-rich, often neglect the core user experience and performance aspects that truly matter. The ultimate goal was to craft a music bot that is both functional and user-friendly—prioritizing responsiveness and an intuitive interface.
-
-> **日本語:** このプロジェクトは、幾度となく挫折した音楽ボット制作への再挑戦から生まれました。多機能でありながら、本当に大切な「使いやすさ」や「パフォーマンス」がおろそかになりがちな既存のBotへの一つの答えです。応答性に優れ、直感的に使える、安定して使いやすい音楽ボットを創り上げることが目標でした。
-
-### 1.2. Core Objectives
-- **Project Name**: **y1oing BOT**
-- **Primary Goal**: To create a comfortable and quality music bot, built for a great personal experience. (私だけの快適なMusic Botを作ること。)
-- **Technology**: **Python**, chosen for its robust ecosystem and developer-friendly nature.
+- A responsive and stable Discord music bot with a focus on a quality audio experience.  
+- 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
 
 ---
 
-## 2. Feature Blueprint
-
-y1oing BOT is equipped with a rich set of features, designed to provide a pleasant music experience.
-(y1oing BOTは、快適な音楽体験を提供するために設計された、豊富な機能を備えています。)
-
-| Category                  | Feature                               | Description                                                                 |
-|:--------------------------|:--------------------------------------|:----------------------------------------------------------------------------|
-| **Core Playback**         | Clear Audio Playback                  | Play, pause, resume, skip, and return to previous tracks with clear audio quality. |
-|                           | Interactive Control Panel             | A real-time, persistent UI for all major playback controls.                 |
-|                           | Versatile Loop Modes                  | Loop a single track, the entire queue, or turn looping off.                 |
-|                           | Dynamic Volume Control                | Adjust volume on the fly (0-200%) via commands or interactive buttons.      |
-| **Advanced Queue**        | Functional Queue Management           | Add, view, and remove tracks from a responsive queue system.                |
-|                           | Interactive Search                    | Search YouTube and select tracks from a clean, paginated results menu.      |
-|                           | Background Buffering Support          | Pre-buffers the next track to ensure smooth transitions.                    |
-| **Playlist System**       | Personal Playlists                    | Create, manage, and play your own private, persistent playlists.            |
-|                           | Shared Server Playlists               | Collaborate on server-wide playlists with a flexible permission model.      |
-|                           | YouTube Playlist Integration          | Add entire public YouTube playlists to your queue or personal playlists.    |
-| **User Customization**    | User Profile System                   | Save and automatically load your preferred settings (volume, EQ).           |
-|                           | Audio Equalizer                       | Fine-tune audio output with a configurable multi-band equalizer.            |
-| **User Experience**       | Responsive Architecture               | Heavy tasks are offloaded to separate processes, ensuring the bot remains responsive. |
-|                           | Auto-Disconnect                       | Automatically leaves the voice channel after inactivity to save resources.  |
-|                           | Helpful Command Guide                 | An interactive help menu guides users through all available features.       |
+## Table of Contents
+- [About The Project](#about-the-project)
+- [Key Features](#key-features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [For Developers: Fast Command Sync](#for-developers-fast-command-sync)
+- [Command List](#command-list)
+- [License & Credit](#license--credit)
 
 ---
 
-## 3. Command Interface
+## About The Project
 
-The bot is controlled via a clean and intuitive set of application (slash) commands.
+このプロジェクトは、応答性と安定した動作を重視して設計されたDiscord音楽ボットです。幾度となく挫折したボット制作の経験から得た教訓をすべて注ぎ込み、「私だけの快適なMusic Bot」を目指して開発されました。
+
+### Key Highlights
+- **スムーズな応答性:** 重い処理を別プロセスで実行することで、Bot本体の応答性を常に維持します。
+- **クリアな音質:** FFmpegのオーディオフィルターを利用し、クリアで安定した音質を提供します。
+- **柔軟なプレイリスト機能:** 個人用プレイリストに加え、権限管理が可能なサーバー共有プレイリストをサポートします。
+- **直感的なUI:** 全ての主要な操作は、リアルタイムに更新されるインタラクティブなボタンとメニューから行えます。
+
+---
+
+## Key Features
+
+- **Core Playback:**
+    - Play, pause, resume, skip, and return to previous tracks.
+    - A real-time, persistent interactive control panel.
+    - Loop modes for a single track or the entire queue.
+
+- **Advanced Playlist System:**
+    - Create and manage your own persistent personal playlists.
+    - Collaborate on server-wide playlists with a permission system (owner, collaborators).
+    - Add entire YouTube playlists in one go.
+
+- **User Experience & Customization:**
+    - User profiles to save settings like volume.
+    - Interactive search for tracks by keyword or URL.
+    - Automatic disconnection after a period of inactivity.
+
+---
+
+## Prerequisites
+
+The following software is required to run this bot.
+
+- **Python 3.10** or higher
+- **FFmpeg**
+    - **[IMPORTANT]** FFmpeg is essential for audio processing. You must install it on your system and ensure it's available in your system's PATH.
+    - **[重要]** FFmpegは、音声データを処理するために不可欠です。お使いのシステムに別途インストールし、環境変数のPATHに通しておく必要があります。
+
+---
+
+## Getting Started
+
+Follow these steps to get the bot running in your own environment.
+
+> **💡 Easy Method (簡単な方法):**
+> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest). After downloading, please proceed from **Step 2** below.
+> 
+> Gitの操作が苦手な方は、このリポジトリの[**Releasesページ**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest)から最新版のソースコード (`Source code (zip)`) を直接ダウンロードするのが一番簡単です。ダウンロードした後は、下の **Step 2** から手順を進めてください。
+
+---
+
+### Step 1: Clone the Repository (リポジトリのクローン)
+```sh
+git clone https://github.com/hanumgf/y1oing-music_Bot.git
+```
+```sh
+cd y1oing-music_Bot
+```
+
+### Step 2: Create a Virtual Environment (仮想環境の作成)
+```sh
+python -m venv venv
+```
+
+Activate the virtual environment:
+- **Windows:**
+  ```sh
+  .\venv\Scripts\activate
+  ```
+- **macOS / Linux:**
+  ```sh
+  source venv/bin/activate
+  ```
+
+### Step 3: Install Dependencies (依存関係のインストール)
+```sh
+pip install -r requirements.txt
+```
+
+### Step 4: Prepare your Discord Bot Token (Discord Bot Tokenの準備)
+1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
+2.  Navigate to the "Bot" tab and click "Add Bot".
+3.  Enable all three **Privileged Gateway Intents**.
+4.  Click "Reset Token" to generate your bot's token and copy it securely.
+
+### Step 5: Configure Environment Variables (環境変数の設定)
+Create a new file named `.env` in the project root directory. Then, add the following content and set your bot token.
+```env
+# .env
+DISCORD_TOKEN="ここにあなたのボットのトークンを貼り付けます"
+```
+
+### Step 6: Run the Bot (ボットの起動)
+```sh
+python run.py
+```
+
+---
+
+## For Developers: Fast Command Sync
+
+To apply slash commands to a test server instantly (instead of waiting up to an hour), follow these steps.
+
+1.  **Get your Test Server ID (テストサーバーIDの取得)**
+    - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
+    - Right-click your server icon and select "Copy Server ID".
+
+2.  **Edit `client.py` (`client.py`の編集)**
+    - Open `bot/client.py`.
+    - Find the `TEST_GUILD` line and replace the ID with your server's ID.
+        - **Before:**
+      ```python
+      TEST_GUILD = discord.Object(id=0000)
+      ```
+        - **After:**
+      ```python
+      TEST_GUILD = discord.Object(id=YOUR_SERVER_ID_HERE)
+      ```
+
+    - Next, modify the command sync block inside the `setup_hook` method:
+        - **Before:**
+      ```python
+      # self.tree.copy_global_to(guild=TEST_GUILD)
+      # await self.tree.sync(guild=TEST_GUILD)
+      await self.tree.sync()
+      ```
+
+        - **After:**
+      ```python
+      self.tree.copy_global_to(guild=TEST_GUILD)
+      await self.tree.sync(guild=TEST_GUILD)
+      # await self.tree.sync()
+      ```
+
+Restart the bot, and slash commands will be available immediately on your test server.
+
+---
+
+## Command List
 
 | Command Group             | Command(s)                      | Description (Japanese: 説明)                                      |
 |:--------------------------|:--------------------------------|:------------------------------------------------------------------|
@@ -57,109 +176,12 @@ The bot is controlled via a clean and intuitive set of application (slash) comma
 | **Playlist (Personal)**   | `/playlist [...]`               | Manages your personal playlists (個人プレイリストの管理).                |
 | **Playlist (Server)**     | `/serverplaylist [...]`         | Manages shared server playlists (サーバー共有プレイリストの管理).           |
 | **Settings**              | `/volume`, `/loop`, `/profile`  | Manages user and playback settings (設定の管理).                   |
-| **Utility**               | `/help`, `/about`, `/feedback`  | Provides help and utility functions (ヘルプとユーティリティ).               |
+| **Utility**               | `/help`, `/feedback`  | Provides help and utility functions (ヘルプとユーティリティ).               |
 
 ---
 
-## 4. Technical Architecture
+## License & Credit
 
-### 4.1. Tech Stack
-- **Language**: Python 3.10+
-- **Core Library**: discord.py 2.x
-- **Audio Source**: yt-dlp
-- **Audio Engine**: FFmpeg
-- **Data Persistence**: JSON files
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-### 4.2. Directory Structure
-The project is architected with a clean separation of concerns, promoting modularity and maintainability.
-(プロジェクトは、関心の分離を徹底したクリーンなアーキテクチャで構築されています。)
-
-```bash
-y1oing-bot/
-├── .env.example              # Example environment file
-├── .gitignore                # Files and directories to be ignored by Git
-├── config.json               # Bot's static configuration
-├── PROJECT_DOCUMENTATION.md  # Detailed project documentation
-├── README.md                 # The main landing page for the repository
-├── requirements.txt          # List of Python dependencies
-├── run.py                    # The entry point script to start the bot
-│
-├── bot/
-│   ├── __init__.py
-│   ├── client.py               # Core bot client class, event handling
-│   ├── main.py                 # Bot initialization and startup logic
-│   └── cogs/                   # Command modules (Cogs), grouped by feature
-│       ├── __init__.py
-│       ├── playback.py
-│       ├── playlist.py
-│       ├── profile.py
-│       ├── server_playlist.py
-│       └── utility.py
-│
-├── data/                       # Persistent data (Generally not tracked by Git)
-│   ├── playlists/
-│   │   ├── server/
-│   │   │   └── .gitkeep        # Placeholder to keep the directory in Git
-│   │   └── solo/
-│   │       └── .gitkeep
-│   └── profiles/
-│       └── .gitkeep
-│
-└── utils/
-    ├── __init__.py
-    ├── audio_handler.py          # Manages yt-dlp and FFmpeg in a separate process
-    ├── player.py                 # The core playback state machine for a single server
-    ├── playlist_manager.py       # Handles all CRUD logic for playlist data
-    ├── profile_manager.py        # Handles loading/saving of user profiles
-    └── views.py                  # Defines interactive UI components (Buttons, Menus)
-
----
-
-## 5. Development Milestones
-
-The project was developed through a structured, phased approach, ensuring each component was built upon a stable foundation. All planned phases are now complete.
-(このプロジェクトは段階的なアプローチで開発され、各コンポーネントが安定した基盤の上に構築されることを保証しました。計画されたすべてのフェーズは現在完了しています。)
-
-### Phase 1: Core Playback Engine `[COMPLETED]`
-- **Objective**: Establish a stable and functional playback foundation.
-- **Key Deliverables**:
-    - `[✔]` Core commands (`/play`, `/pause`, `/stop`, etc.)
-    - `[✔]` Interactive "Now Playing" panel
-    - `[✔]` Functional queue management
-    - `[✔]` Basic interactive search
-
-### Phase 2: Playlist & User Systems `[COMPLETED]`
-- **Objective**: Build comprehensive playlist and user-centric features.
-- **Key Deliverables**:
-    - `[✔]` Full implementation of personal and server-shared playlists
-    - `[✔]` Complete permission model for server playlists
-    - `[✔]` Track and queue looping functionality
-    - `[✔]` User profile system for persistent settings
-
-### Phase 3: Advanced Features & Optimization `[COMPLETED]`
-- **Objective**: Enhance the audio experience and overall performance.
-- **Key Deliverables**:
-    - `[✔]` Advanced search capabilities
-    - `[✔]` Gapless playback support via background buffering
-    - `[✔]` Multi-band audio equalizer
-    - `[✔]` Performance profiling and optimization
-
-### Phase 4: Polish & Finalization `[COMPLETED]`
-- **Objective**: Finalize the user experience and prepare for release.
-- **Key Deliverables**:
-    - `[✔]` Polished and helpful `/help` command
-    - `[✔]` Final utility commands (`/feedback`, `/about`)
-    - `[✔]` Extensive bug fixing and stability testing
-```
-
-### Final Project Status
-
-| Milestone                 | Status          | Description (概要)                     |
-|:--------------------------|:----------------|:---------------------------------------|
-| Initial Design & Planning | ✅ Completed      | 設計・計画                             |
-| Environment Setup         | ✅ Completed      | 環境構築                               |
-| **Phase 1: Core Engine**  | ✅ Completed      | コアエンジン                           |
-| **Phase 2: Playlists**    | ✅ Completed      | プレイリスト機能                       |
-| **Phase 3: Advanced**     | ✅ Completed      | 高度な機能                             |
-| **Phase 4: Finalization** | ✅ Completed      | 仕上げ                                 |
-| **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
+Created by [`y1.ing`](https://discord.com/users/1030100948003065866)
