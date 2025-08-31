@@ -17,11 +17,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.player import Player
-from utils.views import ControlPanelView
 from discord.app_commands import checks
 import asyncio
-from utils.views import SearchView
 from utils.audio_handler import AudioHandler
+from utils.views import ControlPanelView, SearchView, PaginatorView
+import math
+import time
 
 
 
@@ -281,15 +282,57 @@ class PlaybackCog(commands.Cog):
     # --- Queue and Utility Commands ---
 
     @app_commands.command(name="queue", description="Displays the current song queue.")
-    @checks.cooldown(1, 5.0, key=lambda i: i.guild.id)
+    @checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def queue(self, interaction: discord.Interaction):
         player = self.get_player(interaction)
-        if player:
-            queue_info = player.get_queue_info()
-            embed = discord.Embed(title="Music Queue", description=queue_info, color=discord.Color.blue())
-            await interaction.response.send_message(embed=embed)
-        else:
+        
+        # If the Player does not exist, or the song and cue are empty during playback
+        if not player or (not player.current_track and not player.queue):
             await interaction.response.send_message("The queue is empty.", ephemeral=True)
+            return
+            
+        # --- Pagination Processing ---
+        items_per_page = 10
+        queue_tracks = list(player.queue)
+        total_pages = math.ceil(len(queue_tracks) / items_per_page) if queue_tracks else 1
+
+        def create_embed_for_page(page_num: int):
+            """Generates an embed for the specified page number."""
+            
+            embed = discord.Embed(
+                title="🎵 Music Queue",
+                color=discord.Color.blue()
+            )
+            if player.current_track:
+                embed.description = f"**Now Playing:**\n[{player.current_track['title']}]({player.current_track['webpage_url']})\n\n**Up Next:**"
+            else:
+                embed.description = "**Up Next:**"
+            
+            if not queue_tracks:
+                embed.description += "\n*The queue is empty.*"
+                return embed
+
+            start_index = (page_num - 1) * items_per_page
+            end_index = start_index + items_per_page
+            page_items = queue_tracks[start_index:end_index]
+            
+            track_list_str = "\n".join([
+                f"`{start_index + i + 1}.` [{track['title']}]({track['webpage_url']})" 
+                for i, track in enumerate(page_items)
+            ])
+            embed.description += f"\n{track_list_str}"
+            
+            total_duration_seconds = sum(t.get('duration', 0) for t in queue_tracks)
+            total_duration_str = time.strftime('%H:%M:%S', time.gmtime(total_duration_seconds)) if total_duration_seconds > 3600 else time.strftime('%M:%S', time.gmtime(total_duration_seconds))
+            
+            embed.set_footer(text=f"Page {page_num}/{total_pages}  •  {len(queue_tracks)} songs in queue  •  Total duration: {total_duration_str}")
+            return embed
+
+        # Generate PaginatorView and send first page
+        initial_embed = create_embed_for_page(1)
+        view = PaginatorView(embed_creator=create_embed_for_page, total_pages=total_pages)
+        
+        await interaction.response.send_message(embed=initial_embed, view=view)
 
 
     @app_commands.command(name="queue_remove", description="Removes a song from the queue by its number.")
