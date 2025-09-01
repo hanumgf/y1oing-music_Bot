@@ -128,14 +128,14 @@ Edit the `config.json` file to set your user ID as the bot owner. This gives you
 2.  **Edit `config.json` (`config.json`の編集):**
     - Open the `config.json` file in the project root.
     - Replace "Your_User_ID_Here" inside `owner_ids` with your own user ID.
-```json
-{
-  "prefix": "?",
-  "owner_ids": [
-    "Your_User_ID_Here"
-  ]
-}
-```
+    ```json
+    {
+      "prefix": "?",
+      "owner_ids": [
+        "Your_User_ID_Here"
+      ]
+    }
+    ```
 
 ### Step 7: Run the Bot (ボットの起動)
 ```sh
