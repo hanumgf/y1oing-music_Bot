@@ -162,8 +162,4 @@ The project was developed through a structured, phased approach, ensuring each c
 | **Phase 2: Playlists**    | ✅ Completed      | プレイリスト機能                       |
 | **Phase 3: Advanced**     | ✅ Completed      | 高度な機能                             |
 | **Phase 4: Finalization** | ✅ Completed      | 仕上げ                                 |
-<<<<<<< HEAD
 | **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
-=======
-| **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
->>>>>>> 4a11ed10c65168cce7e513dd8e3dc7e36c09ed92
