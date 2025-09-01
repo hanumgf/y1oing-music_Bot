@@ -117,7 +117,27 @@ Create a new file named `.env` in the project root directory. Then, add the foll
 DISCORD_TOKEN="ここにあなたのボットのトークンを貼り付けます"
 ```
 
-### Step 6: Run the Bot (ボットの起動)
+### Step 6: Configure the Bot (ボットの基本設定)
+Edit the `config.json` file to set your user ID as the bot owner. This gives you access to owner-only commands.
+(次に `config.json` ファイルを編集し、あなたのユーザーIDをBotの所有者として設定します。これにより、所有者限定コマンドが使えるようになります。)
+
+1.  **Get your User ID (あなたのユーザーIDを取得):**
+    - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
+    - Right-click your own profile icon and select "Copy User ID".
+
+2.  **Edit `config.json` (`config.json`の編集):**
+    - Open the `config.json` file in the project root.
+    - Replace "Your_User_ID_Here" inside `owner_ids` with your own user ID.
+```json
+{
+  "prefix": "?",
+  "owner_ids": [
+    "Your_User_ID_Here"
+  ]
+}
+```
+
+### Step 7: Run the Bot (ボットの起動)
 ```sh
 python run.py
 ```

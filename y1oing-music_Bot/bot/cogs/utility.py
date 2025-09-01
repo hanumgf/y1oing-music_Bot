@@ -100,8 +100,6 @@ HELP_DATA = {
 
 
 
-# feedback command customecooldown 
-feedback_timestamps: dict[int, list[datetime]] = {}
 
 
 # --- UI Components for Help Command ---
@@ -160,41 +158,6 @@ class HelpView(discord.ui.View):
         super().__init__(timeout=timeout)
         self.add_item(HelpSelect())
         self.add_item(GoHomeButton())
-
-
-class FeedbackCooldown:
-    """A custom cooldown for the feedback command (4 times per day)."""
-    def __init__(self, rate: int = 4, per: float = 86400): # 86,400 seconds = 24 hours
-        self.rate = rate
-        self.per = timedelta(seconds=per)
-        self.bucket = app_commands.BucketType.user
-
-    def __call__(self) -> app_commands.check:
-        async def predicate(interaction: discord.Interaction) -> bool:
-            # Get current time
-            current_time = datetime.now()
-            user_id = interaction.user.id
-            
-            # Get the user's timestamp list (if not, empty list)
-            timestamps = feedback_timestamps.get(user_id, [])
-            
-            # Remove old timestamps that have been over 24 hours old from the list
-            valid_timestamps = [t for t in timestamps if current_time - t < self.per]
-            
-            # Check if the number of times you use within the last 24 hours has reached the limit
-            if len(valid_timestamps) >= self.rate:
-                # 次に使えるまでの時間を計算
-                retry_after = (valid_timestamps[0] + self.per) - current_time
-                # Raise a custom error
-                raise app_commands.CommandOnCooldown(self.bucket, retry_after.total_seconds())
-            
-            # If the limit is not reached, record the current time.
-            valid_timestamps.append(current_time)
-            feedback_timestamps[user_id] = valid_timestamps
-            
-            # check passed, allow the command to run
-            return True
-        return app_commands.check(predicate)
 
 
 
