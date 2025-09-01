@@ -1,7 +1,27 @@
-.env
+# --- Dependencies & Environment ---
+# Python virtual environment
 venv/
+# Environment variables (IMPORTANT: Keep this file private!)
+.env
+
+# --- Python Cache ---
 __pycache__/
-*ffmpeg*/
-*.json
+*.pyc
+
+# --- Local Operation Files ---
+# Startup scripts for local PC operation.
+# PC起動時の自動実行に使っている、ローカル用のスクリプト。
 *.bat
 *.vbs
+
+# Local FFmpeg folder (not required for the bot to run).
+# ローカルにダウンロードした記念のffmpegフォルダ。
+*ffmpeg*/
+
+
+# --- Data Files ---
+# Ignore all .json data files, including user-modified configurations.
+# ユーザーが変更した設定ファイルを含む、全ての.jsonファイルを無視する。
+# Note: A template `config.json` is intentionally tracked in the initial commit.
+# (注: 初期コミットには、テンプレートとしての `config.json` が意図的に含まれています。)
+*.json

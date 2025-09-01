@@ -112,6 +112,7 @@ y1oing-bot/
     ├── playlist_manager.py       # Handles all CRUD logic for playlist data
     ├── profile_manager.py        # Handles loading/saving of user profiles
     └── views.py                  # Defines interactive UI components (Buttons, Menus)
+```
 
 ---
 
@@ -150,7 +151,6 @@ The project was developed through a structured, phased approach, ensuring each c
     - `[✔]` Polished and helpful `/help` command
     - `[✔]` Final utility commands (`/feedback`, `/about`)
     - `[✔]` Extensive bug fixing and stability testing
-```
 
 ### Final Project Status
 
@@ -162,8 +162,4 @@ The project was developed through a structured, phased approach, ensuring each c
 | **Phase 2: Playlists**    | ✅ Completed      | プレイリスト機能                       |
 | **Phase 3: Advanced**     | ✅ Completed      | 高度な機能                             |
 | **Phase 4: Finalization** | ✅ Completed      | 仕上げ                                 |
-<<<<<<< HEAD
 | **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
-=======
-| **Official Release 1.0**  | 🚀 **Released**   | **リリース完了**                       |
->>>>>>> 4a11ed10c65168cce7e513dd8e3dc7e36c09ed92
