@@ -34,7 +34,7 @@ TEST_GUILD = discord.Object(id=0000) # <- Your test server ID (numeric) goes her
 # --- Main Bot Class ---
 
 class Y1oingBot(commands.Bot):
-    """The main bot class for y1oing BOT."""
+    """The main bot class for y1oing Music BOT."""
 
     def __init__(self):
         # Initialize the bot with all intents enabled for full functionality.
@@ -171,5 +171,5 @@ class Y1oingBot(commands.Bot):
         await self.change_presence(status=discord.Status.online, activity=activity)
         
         print(f"Presence set to: Listening to {activity.name}")
-        print("y1oing BOT is ready!")
+        print("y1oing Music BOT is ready!")
         print("--------------------")

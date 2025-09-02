@@ -1,4 +1,4 @@
-# y1oing BOT
+# y1oing Music BOT
 
 > "Sound Perfected, Experience Redefined."
 

@@ -18,7 +18,6 @@ __pycache__/
 # ローカルにダウンロードした記念のffmpegフォルダ。
 *ffmpeg*/
 
-
 # --- Data Files ---
 # Ignore all .json data files, including user-modified configurations.
 # ユーザーが変更した設定ファイルを含む、全ての.jsonファイルを無視する。

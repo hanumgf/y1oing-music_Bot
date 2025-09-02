@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 # 全てのヘルプ情報を一元管理し、更新と保守を容易にします。
 HELP_DATA = {
     "home": {
-        "title": "y1oing BOT Help Menu",
+        "title": "y1oing Music BOT Help Menu",
         "description": (
             "Hello! Welcome to the ultimate music experience.\n"
             "Please select a command category from the menu below."
@@ -186,7 +186,7 @@ class UtilityCog(commands.Cog):
             json.dump(data, f, indent=4)
 
 
-    @app_commands.command(name="help", description="Shows how to use y1oing BOT.")
+    @app_commands.command(name="help", description="Shows how to use y1oing Music BOT.")
     @app_commands.checks.cooldown(1, 5.0, key=lambda i: i.user.id)
     async def help(self, interaction: discord.Interaction):
         # Creates and sends the initial help message with the category selection view.
