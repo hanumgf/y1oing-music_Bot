@@ -114,12 +114,11 @@ pip install -r requirements.txt
 Create a new file named `.env` in the project root directory. Then, add the following content and set your bot token.
 ```env
 # .env
-DISCORD_TOKEN="ここにあなたのボットのトークンを貼り付けます"
+DISCORD_TOKEN="Paste your bot token here"
 ```
 
 ### Step 6: Configure the Bot (ボットの基本設定)
 Edit the `config.json` file to set your user ID as the bot owner. This gives you access to owner-only commands.
-(次に `config.json` ファイルを編集し、あなたのユーザーIDをBotの所有者として設定します。これにより、所有者限定コマンドが使えるようになります。)
 
 1.  **Get your User ID (あなたのユーザーIDを取得):**
     - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
