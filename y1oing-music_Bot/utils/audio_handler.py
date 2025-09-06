@@ -153,7 +153,7 @@ class AudioHandler:
         return await loop.run_in_executor(executor, search_youtube_sync, query, max_results)
 
 
-    async def create_source(self, track_info: dict, volume: float = 1.0):
+    async def create_source(self, track_info: dict, volume: float = 1.0, eq_mode: str = "balanced"):
         """
         Creates a `discord.FFmpegPCMAudio` source for playback.
         It uses the stream URL from `track_info` and applies FFmpeg options for normalization.
@@ -169,18 +169,53 @@ class AudioHandler:
             print(f"FATAL: A playable stream URL could not be found for {track_info.get('title')}")
             return None
 
-        FFMPEG_OPTIONS = {
+        # 2種類のFFmpegオプションを定義
+        
+        # [Mode 1: Balanced] - For Bluetooth/Speakers (イヤホン/スピーカー向け)
+        FFMPEG_OPTIONS_BALANCED = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': (
                 '-vn '
-                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" ' # Filter 1
-                '-af "superequalizer=1b=2:f=80:t=q:w=1.2|2b=2:f=8000:t=q:w=1.2" '  # Filter 2
-                '-af "loudnorm=I=-18:LRA=7:TP=-2.0"'                               # Filter 3
+                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
+                '-af "superequalizer=1b=-1.5:f=2500:t=q:w=1.4|2b=1:f=6000:t=q:w=2.0|3b=-2:f=15000:t=q:w=2.0" '
+                '-af "loudnorm=I=-16.5:LRA=7:TP=-1.5"'
             )
         }
         
+        # [Mode 2: Hi-Fi] - For high-quality headphones (高品質ヘッドホン向け)
+        FFMPEG_OPTIONS_HIFI = {
+            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'options': (
+                '-vn '
+                # [Filter 1] High quality resampling
+                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
+                
+                # [Filter 2] Equalizer that gives a live performance and a powerful feel
+                # (A) A little lifting up the deep bass
+                # (B) Ensure vocal clarity
+                # (C) Reduce the intrusion while adding an atmosphere
+                '-af "superequalizer=1b=-1.5:f=60:t=q:w=1.2|2b=-1:f=4000:t=q:w=1.4|3b=-1.5:f=12000:t=q:w=2.0" '
+                
+                # [Filter 3] Reverb adds a sense of space
+                '-af "aecho=0.8:0.85:15:0.3" '
+                
+                # [Filter 4] Loudness normalization with live dynamics
+                '-af "loudnorm=I=-17:LRA=11:TP=-1.5"'
+            )
+        }
+        
+        # eq_mode引数に応じて、使用するオプションを決定
+        if eq_mode == "hifi":
+            final_options = FFMPEG_OPTIONS_HIFI
+            print("INFO: Using Hi-Fi EQ mode.")
+        else:
+            final_options = FFMPEG_OPTIONS_BALANCED
+            print("INFO: Using Balanced EQ mode.")
+        
+        
+        # 3. オーディオソースの生成 (決定したオプションを使う)
         try:
-            source = discord.FFmpegPCMAudio(audio_url, **FFMPEG_OPTIONS)
+            source = discord.FFmpegPCMAudio(audio_url, **final_options)
             return discord.PCMVolumeTransformer(source, volume=volume)
         except Exception as e:
             print(f"FATAL: FFmpegPCMAudio failed to create source: {e}")

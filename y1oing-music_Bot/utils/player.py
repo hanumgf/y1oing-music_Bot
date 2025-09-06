@@ -44,6 +44,7 @@ class Player:
         self.is_playing = False
         self.loop_mode = "off"  # "off", "track", or "queue"
         self.volume = 1.0  # Represents 100%
+        self.eq_mode = "balanced"  # Default equalizer mode
 
         # --- State Flags for Loop Control ---
         self.stop_requested = False
@@ -159,7 +160,7 @@ class Player:
                 # [Playback Preparation Phase] A track is available.
                 if self.autoleave_task: self.autoleave_task.cancel(); self.autoleave_task = None
                 
-                source = await self.audio_handler.create_source(self.current_track, volume=self.volume)
+                source = await self.audio_handler.create_source(self.current_track, volume=self.volume, eq_mode=self.eq_mode)
                 if not source:
                     if self.text_channel: await self.text_channel.send(f"❌ Failed to play '{self.current_track.get('title', 'Unknown')}'.")
                     self.current_track = None
@@ -263,7 +264,7 @@ class Player:
             if self.voice_client:
                 await self.voice_client.move_to(channel, timeout=10.0)
             else:
-                self.voice_client = await channel.connect(timeout=10.0)
+                self.voice_client = await channel.connect(timeout=10.0, reconnect=True)
 
             if not hasattr(self, '_profile_applied'): # Flags to apply only once
                 await self.apply_profile_settings(interaction.user.id)
@@ -676,4 +677,6 @@ class Player:
             profile_data = profile_cog.profile_manager.load_profile(user_id)
             volume_percent = profile_data.get('volume', 100)
             self.volume = volume_percent / 100.0
-            print(f"Applied profile for {user_id}: Volume set to {volume_percent}%")
+            self.eq_mode = profile_data.get('eq_mode', 'balanced')
+            
+            print(f"Applied profile for {user_id}: Volume set to {volume_percent}%, EQ Mode set to {self.eq_mode}")

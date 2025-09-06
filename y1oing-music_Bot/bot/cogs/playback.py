@@ -96,12 +96,20 @@ class PlaybackCog(commands.Cog):
         ボイスチャンネルの状態変化を監視し、自動退出を管理します。
         """
         # Ignore state changes from the bot itself, unless it was disconnected by an admin.
-        if member.bot and member.id == self.bot.user.id:
-            if before.channel and not after.channel:
-                player = self.get_player(member)
-                if player:
-                    print(f"Bot was disconnected from VC by an admin in guild {member.guild.id}. Cleaning up.")
-                    await player.cleanup()
+        if member.id == self.bot.user.id:
+            player = self.get_player(member)
+            if not player: return
+
+            # Distinguishing an internal reconnection and a real disconnect
+            # 
+            if player.voice_client and player.voice_client.is_connected() and player.voice_client.ws.is_resuming():
+                print("INFO: Bot is resuming voice connection, not a disconnect.")
+                return
+
+            # Detects when the Bot is disconnected from the VC by the administrator
+            if before.channel and not after.channel and not player.is_cleaning_up:
+                print(f"Bot was disconnected from VC in guild {member.guild.id}. Cleaning up.")
+                await player.cleanup()
             return
             
         player = self.players.get(member.guild.id)
@@ -250,7 +258,7 @@ class PlaybackCog(commands.Cog):
     async def stop(self, interaction: discord.Interaction):
         player = self.get_player(interaction)
         if player:
-            message = player.stop()
+            message = await player.stop()
             await interaction.response.send_message(message)
         else:
             await interaction.response.send_message("There is no music currently playing.", ephemeral=True)
@@ -382,8 +390,8 @@ class PlaybackCog(commands.Cog):
                 description=f"**{player.current_track['title']}**",
                 color=discord.Color.green()
             )
-            view = ControlPanelView(player)
-            await interaction.response.send_message(embed=embed, view=view)
+            # view = ControlPanelView(player)
+            await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("There is no music currently playing.", ephemeral=True)
 

@@ -21,13 +21,14 @@ class ProfileCog(commands.Cog):
         self.profile_manager = ProfileManager()
 
 
-    # --- Profile Commands ---
+    # profile_group を先に定義する
+    profile_group = app_commands.Group(name="profile", description="Manage user settings.")
 
-    @app_commands.command(name="volume", description="Changes playback volume and saves it to your profile.")
+
+
+    @profile_group.command(name="volume", description="Changes playback volume and saves it to your profile.")
     @app_commands.describe(percent="The volume percentage to set (0-200).")
     async def volume(self, interaction: discord.Interaction, percent: app_commands.Range[int, 0, 200]):
-        # Get the player instance from the PlaybackCog.
-        # PlaybackCogからプレイヤーインスタンスを取得します。
         playback_cog = self.bot.get_cog("PlaybackCog")
         if not playback_cog:
             await interaction.response.send_message("Error: Playback feature is currently unavailable.", ephemeral=True)
@@ -38,8 +39,6 @@ class ProfileCog(commands.Cog):
             await interaction.response.send_message("This command can only be used while the bot is in a voice channel.", ephemeral=True)
             return
         
-        # Set the player's volume and save the setting to the user's profile.
-        # プレイヤーの音量を設定し、その値をユーザーのプロフィールに保存します。
         message = await player.set_volume(percent)
         
         profile_data = self.profile_manager.load_profile(interaction.user.id)
@@ -49,8 +48,39 @@ class ProfileCog(commands.Cog):
         await interaction.response.send_message(f"{message}\nAlso saved to your profile.")
 
 
-    # --- Profile Command Group ---
-    profile_group = app_commands.Group(name="profile", description="Manage user settings.")
+    @profile_group.command(name="eq", description="音質モードを切り替えます。")
+    @app_commands.describe(mode="お使いの再生環境に合わせたモードを選択してください。")
+    @app_commands.choices(mode=[
+        discord.app_commands.Choice(name="🎧 高音質 (Hi-Fi)", value="hifi"),
+        discord.app_commands.Choice(name="🎵 バランス (Balanced)", value="balanced"),
+    ])
+    async def eq(self, interaction: discord.Interaction, mode: discord.app_commands.Choice[str]):
+        # プロフィールをロード
+        profile_data = self.profile_manager.load_profile(interaction.user.id)
+        
+        # 新しいモードを設定
+        new_mode = mode.value
+        profile_data['eq_mode'] = new_mode
+        
+        # プロフィールを保存
+        self.profile_manager.save_profile(interaction.user.id, profile_data)
+        
+        # Playerインスタンスがあれば、即座に設定を反映
+        playback_cog = self.bot.get_cog("PlaybackCog")
+        if playback_cog:
+            player = playback_cog.get_player(interaction)
+            if player:
+                player.eq_mode = new_mode
+                await interaction.response.send_message(
+                    f"✅ 音質モードを「{mode.name}」に変更しました。\n次の曲から適用されます。",
+                    ephemeral=True
+                )
+                return
+
+        await interaction.response.send_message(
+            f"✅ 音質モードを「{mode.name}」に設定しました。\n次回の再生セッションから適用されます。",
+            ephemeral=True
+        )
 
 
     @profile_group.command(name="save", description="Saves the current volume setting to your profile.")
@@ -73,15 +103,22 @@ class ProfileCog(commands.Cog):
 
     @profile_group.command(name="show", description="Displays your current profile settings.")
     async def show(self, interaction: discord.Interaction):
-        # Load and display the user's profile settings in an embed.
-        # ユーザーのプロフィール設定を読み込み、埋め込みメッセージで表示します。
         profile = self.profile_manager.load_profile(interaction.user.id)
         embed = discord.Embed(
             title=f"{interaction.user.display_name}'s Profile",
             color=discord.Color.blurple()
         )
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
-        embed.add_field(name="🔊 Default Volume", value=f"**{profile.get('volume', 100)}%**")
+        
+        volume_setting = profile.get('volume', 100)
+        
+        eq_mode = profile.get('eq_mode', 'balanced')
+        mode_display = "🎧 Hi-Fi" if eq_mode == 'hifi' else "🎵 Balanced"
+        
+        embed.description = (
+            f"**🔊 Volume:** {volume_setting}%\n"
+            f"**🎚️ EQ Mode:** {mode_display}"
+        )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 

@@ -9,3 +9,6 @@ yt-dlp
 
 # Required by discord.py for voice functionality (encryption)
 PyNaCl
+
+# Manually specify a known stable version of aiohttp
+aiohttp==3.9.1
