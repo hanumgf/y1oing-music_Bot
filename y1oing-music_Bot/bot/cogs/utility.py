@@ -89,8 +89,9 @@ HELP_DATA = {
             "emoji": "⚙️",
             "description": "Commands for bot settings and profiles.",
             "commands": {
-                "/volume `percent`": "Changes volume and saves to your profile.",
                 "/loop `mode`": "Sets the loop mode (Off, Track, Queue).",
+                "/profile volume `percent`": "Changes volume and saves to your profile.",
+                "/profile eq `mode`": "Sets the equalizer mode and saves to your profile.",
                 "/profile show": "Shows your current profile settings.",
                 "/profile save": "Saves the current volume to your profile.",
             }
