@@ -317,10 +317,10 @@ class Player:
 
     async def cleanup(self):
         """
-        [EN] The final cleanup method. Stops all tasks, disconnects from voice,
-        [EN] sends a final message if appropriate, and ensures the instance is torn down.
-        [JP] 最終的なクリーンアップメソッド。全タスクを停止し、VCから切断し、
-        [JP] 適切な場合は最終メッセージを送信し、インスタンスが完全に解体されることを保証します。
+        The final cleanup method. Stops all tasks, disconnects from voice,
+        sends a final message if appropriate, and ensures the instance is torn down.
+        最終的なクリーンアップメソッド。全タスクを停止し、VCから切断し、
+        適切な場合は最終メッセージを送信し、インスタンスが完全に解体されることを保証します。
         """
         if self.is_cleaning_up: return
         self.is_cleaning_up = True
