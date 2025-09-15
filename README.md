@@ -25,13 +25,13 @@
 
 ## About The Project
 
-このプロジェクトは、応答性と安定した動作を重視して設計されたDiscord音楽ボットです。幾度となく挫折したボット制作の経験から得た教訓をすべて注ぎ込み、「私だけの快適なMusic Bot」を目指して開発されました。
+This project is a Discord music bot designed with a focus on responsiveness and stable operation. Drawing upon lessons learned from numerous failed bot development attempts, it was developed with the aim of creating "my own comfortable Music Bot".
 
 ### Key Highlights
-- **スムーズな応答性:** 重い処理を別プロセスで実行することで、Bot本体の応答性を常に維持します。
-- **クリアな音質:** FFmpegのオーディオフィルターを利用し、クリアで安定した音質を提供します。
-- **柔軟なプレイリスト機能:** 個人用プレイリストに加え、権限管理が可能なサーバー共有プレイリストをサポートします。
-- **直感的なUI:** 全ての主要な操作は、リアルタイムに更新されるインタラクティブなボタンとメニューから行えます。
+- **Smooth responsiveness:** By executing heavy processing in a separate process, the responsiveness of the Bot itself is maintained at all times.
+- **Clear sound quality:** Utilising FFmpeg's audio filters, we provide clear and stable sound quality.
+- **Flexible playlist features:** In addition to personal playlists, it supports server-shared playlists with permission management.
+- **An intuitive UI:** All key operations can be performed via interactive buttons and menus that update in real time.
 
 ---
 
@@ -71,8 +71,6 @@ Follow these steps to get the bot running in your own environment.
 
 > **💡 Easy Method (簡単な方法):**
 > If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest). After downloading, please proceed from **Step 2** below.
-> 
-> Gitの操作が苦手な方は、このリポジトリの[**Releasesページ**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest)から最新版のソースコード (`Source code (zip)`) を直接ダウンロードするのが一番簡単です。ダウンロードした後は、下の **Step 2** から手順を進めてください。
 
 ---
 
@@ -120,11 +118,11 @@ DISCORD_TOKEN="Paste your bot token here"
 ### Step 6: Configure the Bot (ボットの基本設定)
 Edit the `config.json` file to set your user ID as the bot owner. This gives you access to owner-only commands.
 
-1.  **Get your User ID (あなたのユーザーIDを取得):**
+1.  **Get your User ID:**
     - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
     - Right-click your own profile icon and select "Copy User ID".
 
-2.  **Edit `config.json` (`config.json`の編集):**
+2.  **Edit `config.json`:**
     - Open the `config.json` file in the project root.
     - Replace "Your_User_ID_Here" inside `owner_ids` with your own user ID.
     ```json
@@ -147,11 +145,11 @@ python run.py
 
 To apply slash commands to a test server instantly (instead of waiting up to an hour), follow these steps.
 
-1.  **Get your Test Server ID (テストサーバーIDの取得)**
+1.  **Get your Test Server ID**
     - In Discord, enable "Developer Mode" in `User Settings` > `Advanced`.
     - Right-click your server icon and select "Copy Server ID".
 
-2.  **Edit `client.py` (`client.py`の編集)**
+2.  **Edit `client.py`**
     - Open `bot/client.py`.
     - Find the `TEST_GUILD` line and replace the ID with your server's ID.
         - **Before:**
