@@ -13,6 +13,7 @@ __pycache__/
 # PC起動時の自動実行に使っている、ローカル用のスクリプト。
 *.bat
 *.vbs
+*.sh
 
 # Local FFmpeg folder (not required for the bot to run).
 # ローカルにダウンロードした記念のffmpegフォルダ。

@@ -175,7 +175,7 @@ class AudioHandler:
         FFMPEG_OPTIONS_BALANCED = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': (
-                '-vn '
+                '-vn -loglevel error '
                 '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
                 '-af "superequalizer=1b=-1.5:f=2500:t=q:w=1.4|2b=1:f=6000:t=q:w=2.0|3b=-2:f=15000:t=q:w=2.0" '
                 '-af "loudnorm=I=-16.5:LRA=7:TP=-1.5"'
@@ -186,7 +186,7 @@ class AudioHandler:
         FFMPEG_OPTIONS_HIFI = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': (
-                '-vn '
+                '-vn -loglevel error '
                 # [Filter 1] High quality resampling
                 '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
                 
