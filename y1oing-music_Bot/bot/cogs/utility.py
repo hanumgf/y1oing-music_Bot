@@ -16,20 +16,6 @@ import json
 import os
 from datetime import datetime, timedelta
 
-def is_owner():
-    """
-    app_commands用の、オーナーチェック関数。
-    Botの`owner_ids`に、コマンド実行者が含まれているかを確認する。
-    """
-    async def predicate(interaction: discord.Interaction) -> bool:
-        # Botのオーナーか、あるいは、config.jsonで指定されたオーナーリストに含まれているか
-        # Botインスタンス (interaction.client) 経由で、is_owner()を呼び出すのが、最も確実。
-        if await interaction.client.is_owner(interaction.user):
-            return True
-        # もし、オーナーでなければ、ここでエラーメッセージを返してしまうと、
-        # グローバルエラーハンドラと競合する可能性があるので、シンプルにFalseを返す。
-        return False
-    return app_commands.check(predicate)
 
 # --- Help Command Data Store ---
 # Centralizes all help information for easy updates and management.
