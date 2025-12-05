@@ -47,7 +47,7 @@ class Y1oingBot(commands.Bot):
             # 1. このファイル(__file__)の絶対パスを取得
             script_dir = os.path.dirname(os.path.abspath(__file__))
             # client.pyからは2階層上
-            config_path = os.path.join(script_dir, '..', '..', 'config.json')
+            config_path = os.path.join(script_dir, '..', 'config.json')
 
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
