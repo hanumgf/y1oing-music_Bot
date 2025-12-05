@@ -16,6 +16,20 @@ import json
 import os
 from datetime import datetime, timedelta
 
+def is_owner():
+    """
+    app_commands用の、オーナーチェック関数。
+    Botの`owner_ids`に、コマンド実行者が含まれているかを確認する。
+    """
+    async def predicate(interaction: discord.Interaction) -> bool:
+        # Botのオーナーか、あるいは、config.jsonで指定されたオーナーリストに含まれているか
+        # Botインスタンス (interaction.client) 経由で、is_owner()を呼び出すのが、最も確実。
+        if await interaction.client.is_owner(interaction.user):
+            return True
+        # もし、オーナーでなければ、ここでエラーメッセージを返してしまうと、
+        # グローバルエラーハンドラと競合する可能性があるので、シンプルにFalseを返す。
+        return False
+    return app_commands.check(predicate)
 
 # --- Help Command Data Store ---
 # Centralizes all help information for easy updates and management.
@@ -171,7 +185,7 @@ class UtilityCog(commands.Cog):
         # 1. Get the absolute path to this file (__file__)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # 2. Constructs an absolute path to `config.json`, located three levels above (`..`)
-        self.config_path = os.path.join(script_dir, '..', '..', '..', 'config.json')
+        self.config_path = os.path.join(script_dir, '..', '..', 'config.json')
 
     # --- Load and Save Config Methods ---
     def load_config(self) -> dict:
@@ -259,10 +273,10 @@ class UtilityCog(commands.Cog):
             # 開発者がDMをブロックしているなどの理由で送信失敗
             await interaction.response.send_message("❌ Sorry, I couldn't deliver your message to the developer.", ephemeral=True)
 
-
+"""
     @app_commands.command(name="set_feedback_recipient", description="[Owner Only] Set the user who receives feedback.")
     @app_commands.describe(user="The user who will receive feedback DMs.")
-    @app_commands.check(commands.is_owner()) # Botのオーナーだけが実行できる
+    @is_owner() # Botのオーナーだけが実行できる
     async def set_feedback_recipient(self, interaction: discord.Interaction, user: discord.User):
         
         config = self.load_config()
@@ -276,7 +290,7 @@ class UtilityCog(commands.Cog):
     async def on_set_feedback_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
             await interaction.response.send_message("❌ Only the bot owner can use this command.", ephemeral=True)
-
+"""
 
 
 async def setup(bot: commands.T):

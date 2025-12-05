@@ -37,50 +37,39 @@ class Y1oingBot(commands.Bot):
     """The main bot class for y1oing Music BOT."""
 
     def __init__(self):
-        # Initialize the bot with all intents enabled for full functionality.
-        # `command_prefix` is not needed for slash commands.
+        
         intents = discord.Intents.all()
-        super().__init__(command_prefix="?", intents=intents)
-
         owner_ids = []
         try:
-            # 1. このファイル(__file__)の絶対パスを取得
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            # client.pyからは2階層上
             config_path = os.path.join(script_dir, '..', 'config.json')
-
             with open(config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 
-                # --- [追加] 起動時チェック ---
                 owner_ids_str = config.get("owner_ids", [])
                 if not owner_ids_str or "Your_User_ID_Here" in owner_ids_str:
                     print("="*50)
                     print("!!! WARNING: Bot owner ID is not set in config.json! !!!")
-                    print("!!! Some commands like /set_feedback_recipient will not be usable. !!!")
                     print("="*50)
                 else:
-                    # IDが数字であることを確認してから変換する
                     owner_ids = [int(id_str) for id_str in owner_ids_str if id_str.isdigit()]
                     if not owner_ids:
                         print("="*50)
                         print("!!! WARNING: owner_ids in config.json contains invalid values! !!!")
                         print("="*50)
-                
+
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print("="*50)
             print(f"!!! ERROR: Could not load config.json: {e} !!!")
-            print("!!! Owner-only commands will not be available. !!!")
             print("="*50)
 
+        # --- ★変更点3: 材料が全て揃ったので、最後に、一度だけ、Botを「組み立てる」 ---
         super().__init__(
-            command_prefix="!y1oing_unused_prefix!",
+            command_prefix="!y1oing_unused_prefix!", # プレフィックスは使わないので、何でも良い
             intents=intents,
-            owner_ids=set(owner_ids)
+            owner_ids=set(owner_ids) # configから読み込んだowner_idsを、ここで渡す
         )
 
-        # Set up the global error handler for all application commands.
-        # This is the standard way to assign an error handler within a class.
         self.tree.on_error = self.on_app_command_error
 
 
