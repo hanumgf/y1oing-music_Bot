@@ -89,9 +89,8 @@ HELP_DATA = {
             "emoji": "⚙️",
             "description": "Commands for bot settings and profiles.",
             "commands": {
+                "/volume `percent`": "Changes volume and saves to your profile.",
                 "/loop `mode`": "Sets the loop mode (Off, Track, Queue).",
-                "/profile volume `percent`": "Changes volume and saves to your profile.",
-                "/profile eq `mode`": "Sets the equalizer mode and saves to your profile.",
                 "/profile show": "Shows your current profile settings.",
                 "/profile save": "Saves the current volume to your profile.",
             }
@@ -171,7 +170,7 @@ class UtilityCog(commands.Cog):
         # 1. Get the absolute path to this file (__file__)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # 2. Constructs an absolute path to `config.json`, located three levels above (`..`)
-        self.config_path = os.path.join(script_dir, '..', '..', 'config.json')
+        self.config_path = os.path.join(script_dir, '..', '..', '..', 'config.json')
 
     # --- Load and Save Config Methods ---
     def load_config(self) -> dict:
@@ -202,6 +201,80 @@ class UtilityCog(commands.Cog):
         embed.set_footer(text=f"{self.bot.user.name} - Sound Perfected.")
         
         await interaction.response.send_message(embed=embed, view=HelpView(), ephemeral=True)
+
+
+    @app_commands.command(name="feedback", description="Send feedback or report a bug to the developer.")
+    @app_commands.describe(message="Your feedback message.")
+    @app_commands.checks.cooldown(4, 86400.0, key=lambda i: i.user.id)
+    async def feedback(self, interaction: discord.Interaction, message: str):
+        
+        config = self.load_config()
+        recipient_id_str = config.get("feedback_recipient_id")
+
+        # --- [追加] 実行時チェック ---
+        # 1. IDが設定されているか、かつデフォルトのままではないか
+        if not recipient_id_str or not recipient_id_str.isdigit() or "Your_User_ID_Here" in recipient_id_str:
+            print(f"--- FEEDBACK ERROR ---")
+            print(f"Feedback from {interaction.user} failed.")
+            print(f"Reason: feedback_recipient_id is not configured correctly in config.json.")
+            print(f"Current value: {recipient_id_str}")
+            print(f"----------------------")
+            await interaction.response.send_message("❌ Sorry, the feedback feature is currently unavailable. The developer has been notified.", ephemeral=True)
+            return
+
+        try:
+            # 2. IDが、実在するDiscordユーザーのものか
+            recipient_id = int(recipient_id_str)
+            recipient = await self.bot.fetch_user(recipient_id)
+        except (discord.NotFound, ValueError):
+            print(f"--- FEEDBACK ERROR ---")
+            print(f"Feedback from {interaction.user} failed.")
+            print(f"Reason: The user ID '{recipient_id_str}' set as feedback_recipient_id could not be found.")
+            print(f"----------------------")
+            await interaction.response.send_message("❌ Sorry, the feedback feature is currently unavailable. The developer has been notified.", ephemeral=True)
+            return
+
+        # 開発者に送信するDMのEmbedを作成
+        embed = discord.Embed(
+            title="📬 New Feedback Received",
+            description=message,
+            color=discord.Color.orange(),
+            timestamp=interaction.created_at
+        )
+        embed.set_author(
+            name=f"From: {interaction.user.display_name} ({interaction.user.id})",
+            icon_url=interaction.user.display_avatar.url
+        )
+        if interaction.guild:
+            embed.add_field(name="Sent From Server", value=f"{interaction.guild.name} ({interaction.guild.id})")
+
+        try:
+            # DMを送信
+            await recipient.send(embed=embed)
+            
+            # 送信成功をユーザーに通知
+            await interaction.response.send_message("✅ Thank you! Your feedback has been sent successfully.", ephemeral=True)
+        except discord.Forbidden:
+            # 開発者がDMをブロックしているなどの理由で送信失敗
+            await interaction.response.send_message("❌ Sorry, I couldn't deliver your message to the developer.", ephemeral=True)
+
+
+    @app_commands.command(name="set_feedback_recipient", description="[Owner Only] Set the user who receives feedback.")
+    @app_commands.describe(user="The user who will receive feedback DMs.")
+    @app_commands.check(commands.is_owner()) # Botのオーナーだけが実行できる
+    async def set_feedback_recipient(self, interaction: discord.Interaction, user: discord.User):
+        
+        config = self.load_config()
+        config["feedback_recipient_id"] = str(user.id)
+        self.save_config(config)
+
+        await interaction.response.send_message(f"✅ Feedback will now be sent to **{user.display_name}**.", ephemeral=True)
+
+    # Botオーナーチェックに失敗した時のエラーメッセージ
+    @set_feedback_recipient.error
+    async def on_set_feedback_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            await interaction.response.send_message("❌ Only the bot owner can use this command.", ephemeral=True)
 
 
 
