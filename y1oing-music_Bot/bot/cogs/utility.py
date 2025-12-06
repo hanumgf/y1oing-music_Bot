@@ -99,7 +99,13 @@ HELP_DATA = {
 }
 
 
-
+def is_owner():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if not isinstance(interaction.user, discord.Member):
+            return False
+        return interaction.user.guild_permissions.administrator
+    
+    return app_commands.check(predicate)
 
 
 # --- UI Components for Help Command ---
@@ -170,7 +176,7 @@ class UtilityCog(commands.Cog):
         # 1. Get the absolute path to this file (__file__)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # 2. Constructs an absolute path to `config.json`, located three levels above (`..`)
-        self.config_path = os.path.join(script_dir, '..', '..', '..', 'config.json')
+        self.config_path = os.path.join(script_dir, '..', '..', 'config.json')
 
     # --- Load and Save Config Methods ---
     def load_config(self) -> dict:
@@ -261,7 +267,7 @@ class UtilityCog(commands.Cog):
 
     @app_commands.command(name="set_feedback_recipient", description="[Owner Only] Set the user who receives feedback.")
     @app_commands.describe(user="The user who will receive feedback DMs.")
-    @app_commands.check(commands.is_owner()) # Botのオーナーだけが実行できる
+    @is_owner() # Botのオーナーだけが実行できる
     async def set_feedback_recipient(self, interaction: discord.Interaction, user: discord.User):
         
         config = self.load_config()
