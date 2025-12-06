@@ -99,14 +99,6 @@ HELP_DATA = {
 }
 
 
-def is_owner():
-    async def predicate(interaction: discord.Interaction) -> bool:
-        if not isinstance(interaction.user, discord.Member):
-            return False
-        return interaction.user.guild_permissions.administrator
-    
-    return app_commands.check(predicate)
-
 
 # --- UI Components for Help Command ---
 
@@ -263,24 +255,6 @@ class UtilityCog(commands.Cog):
         except discord.Forbidden:
             # 開発者がDMをブロックしているなどの理由で送信失敗
             await interaction.response.send_message("❌ Sorry, I couldn't deliver your message to the developer.", ephemeral=True)
-
-
-    @app_commands.command(name="set_feedback_recipient", description="[Owner Only] Set the user who receives feedback.")
-    @app_commands.describe(user="The user who will receive feedback DMs.")
-    @is_owner() # Botのオーナーだけが実行できる
-    async def set_feedback_recipient(self, interaction: discord.Interaction, user: discord.User):
-        
-        config = self.load_config()
-        config["feedback_recipient_id"] = str(user.id)
-        self.save_config(config)
-
-        await interaction.response.send_message(f"✅ Feedback will now be sent to **{user.display_name}**.", ephemeral=True)
-
-    # Botオーナーチェックに失敗した時のエラーメッセージ
-    @set_feedback_recipient.error
-    async def on_set_feedback_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message("❌ Only the bot owner can use this command.", ephemeral=True)
 
 
 
