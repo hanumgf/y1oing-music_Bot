@@ -309,7 +309,7 @@ class Player:
 
     async def autoleave_timer(self):
         """Waits for a period of inactivity, then triggers cleanup."""
-        await asyncio.sleep(300) # 5 minutes
+        await asyncio.sleep(600) # 10 minutes
         if self.voice_client and not self.is_playing and not self.is_cleaning_up:
             
             await self.cleanup()
@@ -604,7 +604,7 @@ class Player:
                 break
 
             # Wait for the next update cycle.
-            await asyncio.sleep(10) # ~~Increased sleep time to reduce API calls.~~
+            await asyncio.sleep(5) # ~~Increased sleep time to reduce API calls.~~
 
 
     def create_now_playing_embed(self, finished=False):
