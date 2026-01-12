@@ -51,6 +51,7 @@ HELP_DATA = {
                 "/stop": "Stops playback and clears the queue.",
                 "/skip": "Skips the current song.",
                 "/previous": "Returns to the previous song.",
+                "/loop `mode`": "Sets the loop mode (Off, Track, Queue).",
                 "/nowplaying": "Reshows the current Now Playing panel.",
             }
         },
@@ -89,10 +90,10 @@ HELP_DATA = {
             "emoji": "⚙️",
             "description": "Commands for bot settings and profiles.",
             "commands": {
-                "/volume `percent`": "Changes volume and saves to your profile.",
-                "/loop `mode`": "Sets the loop mode (Off, Track, Queue).",
                 "/profile show": "Shows your current profile settings.",
-                "/profile save": "Saves the current volume to your profile.",
+                "/profile volume `percent`": "Changes volume and saves to your profile.",
+                "/profile eq `mode`": "Switch sound quality mode",
+                "/profile save": "Saves the current volume to your profile."
             }
         }
     }

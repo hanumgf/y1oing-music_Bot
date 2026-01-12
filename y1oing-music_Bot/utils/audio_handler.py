@@ -197,7 +197,7 @@ class AudioHandler:
                 '-af "superequalizer=1b=-1.5:f=60:t=q:w=1.2|2b=-1:f=4000:t=q:w=1.4|3b=-1.5:f=12000:t=q:w=2.0" '
                 
                 # [Filter 3] Reverb adds a sense of space
-                '-af "aecho=0.8:0.85:15:0.3" '
+                '-af "aecho=0.8:0.85:15:0.4" '
                 
                 # [Filter 4] Loudness normalization with live dynamics
                 '-af "loudnorm=I=-17:LRA=11:TP=-1.5"'

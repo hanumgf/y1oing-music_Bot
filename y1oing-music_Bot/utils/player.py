@@ -604,7 +604,7 @@ class Player:
                 break
 
             # Wait for the next update cycle.
-            await asyncio.sleep(10) # Increased sleep time to reduce API calls.
+            await asyncio.sleep(10) # ~~Increased sleep time to reduce API calls.~~
 
 
     def create_now_playing_embed(self, finished=False):

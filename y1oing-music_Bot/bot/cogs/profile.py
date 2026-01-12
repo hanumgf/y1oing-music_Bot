@@ -48,11 +48,11 @@ class ProfileCog(commands.Cog):
         await interaction.response.send_message(f"{message}\nAlso saved to your profile.")
 
 
-    @profile_group.command(name="eq", description="音質モードを切り替えます。")
-    @app_commands.describe(mode="お使いの再生環境に合わせたモードを選択してください。")
+    @profile_group.command(name="eq", description="Switch sound quality mode")
+    @app_commands.describe(mode="Please select the mode that matches your playback environment.")
     @app_commands.choices(mode=[
-        discord.app_commands.Choice(name="🎧 高音質 (Hi-Fi)", value="hifi"),
-        discord.app_commands.Choice(name="🎵 バランス (Balanced)", value="balanced"),
+        discord.app_commands.Choice(name="🎧 High quality (Hi-Fi)", value="hifi"),
+        discord.app_commands.Choice(name="🎵 Balanced (Balanced)", value="balanced"),
     ])
     async def eq(self, interaction: discord.Interaction, mode: discord.app_commands.Choice[str]):
         # プロフィールをロード
@@ -72,13 +72,13 @@ class ProfileCog(commands.Cog):
             if player:
                 player.eq_mode = new_mode
                 await interaction.response.send_message(
-                    f"✅ 音質モードを「{mode.name}」に変更しました。\n次の曲から適用されます。",
+                    f"✅ Sound quality mode has been changed to [{mode.name}]\nApplies to the next track",
                     ephemeral=True
                 )
                 return
 
         await interaction.response.send_message(
-            f"✅ 音質モードを「{mode.name}」に設定しました。\n次回の再生セッションから適用されます。",
+            f"✅ Sound quality mode has been changed to [{mode.name}]\nThis change will take effect starting with your next playback session.",
             ephemeral=True
         )
 
