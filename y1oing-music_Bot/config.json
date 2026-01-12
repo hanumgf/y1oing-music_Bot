@@ -1,5 +1,6 @@
 {
     "prefix": "?",
+    "feedback_recipient_id": "Your_User_ID_Here",
     "owner_ids": [
         "Your_User_ID_Here"
     ]

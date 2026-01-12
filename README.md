@@ -128,6 +128,7 @@ Edit the `config.json` file to set your user ID as the bot owner. This gives you
     ```json
     {
       "prefix": "?",
+      "feedback_recipient_id": "Your_User_ID_Here",
       "owner_ids": [
         "Your_User_ID_Here"
       ]
