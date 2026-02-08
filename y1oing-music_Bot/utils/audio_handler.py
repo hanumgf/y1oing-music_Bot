@@ -176,31 +176,26 @@ class AudioHandler:
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': (
                 '-vn -loglevel error '
-                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
-                '-af "superequalizer=1b=-1.5:f=2500:t=q:w=1.4|2b=1:f=6000:t=q:w=2.0|3b=-2:f=15000:t=q:w=2.0" '
-                '-af "loudnorm=I=-16.5:LRA=7:TP=-1.5"'
+                '-af "aresample=resampler=soxr:precision=20:out_sample_rate=48000,'
+                'anequalizer=c0 f=2500 w=100 g=-1.5 t=1|c0 f=6000 w=200 g=1 t=1|c0 f=15000 w=500 g=-2 t=1,'
+                'loudnorm=I=-16.5:LRA=7:TP=-1.5"'
             )
         }
-        
+
         # [Mode 2: Hi-Fi] - For high-quality headphones (高品質ヘッドホン向け)
         FFMPEG_OPTIONS_HIFI = {
-            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'before_options': (
+                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 '
+                '-rw_timeout 5000000 '
+                '-analyzeduration 5M -probesize 5M'
+            ),
             'options': (
                 '-vn -loglevel error '
-                # [Filter 1] High quality resampling
-                '-af "aresample=resampler=soxr:precision=28:out_sample_rate=48000" '
-                
-                # [Filter 2] Equalizer that gives a live performance and a powerful feel
-                # (A) A little lifting up the deep bass
-                # (B) Ensure vocal clarity
-                # (C) Reduce the intrusion while adding an atmosphere
-                '-af "superequalizer=1b=-1.5:f=60:t=q:w=1.2|2b=-1:f=4000:t=q:w=1.4|3b=-1.5:f=12000:t=q:w=2.0" '
-                
-                # [Filter 3] Reverb adds a sense of space
-                '-af "aecho=0.8:0.85:15:0.4" '
-                
-                # [Filter 4] Loudness normalization with live dynamics
-                '-af "loudnorm=I=-17:LRA=11:TP=-1.5"'
+                '-af "aresample=resampler=swr:out_sample_rate=48000:dither_method=shibata,'
+                'anequalizer=c0 f=60 w=20 g=2 t=1|c0 f=4000 w=200 g=-1.5 t=1|c0 f=8000 w=300 g=1.5 t=1|c0 f=12000 w=500 g=1 t=1,'
+                'extrastereo=m=1.1,'
+                'aecho=0.8:0.4:30:0.2,'
+                'loudnorm=I=-18:LRA=13:TP=-1.0"'
             )
         }
         
