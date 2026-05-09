@@ -18,7 +18,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
-import os
+from pathlib import Path
 
 
 # --- Bot Configuration ---
@@ -27,68 +27,74 @@ import os
 # To deploy commands globally for production, comment out or remove this line.
 # テストを高速化するため、コマンドを即時同期させるサーバー（ギルド）IDを指定します。
 # 本番環境でコマンドをグローバルにデプロイする場合は、この行をコメントアウトまたは削除してください。
-TEST_GUILD = discord.Object(id=0000) # <- Your test server ID (numeric) goes here
-
+# TEST_GUILD = discord.Object(id=0000) # <- Your test server ID (numeric) goes here
 
 
 # --- Main Bot Class ---
+
 
 class Y1oingBot(commands.Bot):
     """The main bot class for y1oing Music BOT."""
 
     def __init__(self):
         # Initialize the bot with all intents enabled for full functionality.
-        # `command_prefix` is not needed for slash commands.
         intents = discord.Intents.all()
-        super().__init__(command_prefix="?", intents=intents)
+
+        # 削除: ここにあった1回目の super().__init__ 呼び出しを削除
 
         owner_ids = []
         try:
-            # 1. このファイル(__file__)の絶対パスを取得
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            # client.pyからは2階層上
-            config_path = os.path.join(script_dir, '..', 'config.json')
+            # pathlibを使ってスッキリとパスを取得 (client.pyからは2階層上)
+            config_path = Path(__file__).resolve().parent.parent / "config.json"
 
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
-                
+
                 # --- [追加] 起動時チェック ---
                 owner_ids_str = config.get("owner_ids", [])
                 if not owner_ids_str or "Your_User_ID_Here" in owner_ids_str:
-                    print("="*50)
+                    print("=" * 50)
                     print("!!! WARNING: Bot owner ID is not set in config.json! !!!")
-                    print("!!! Some commands like /set_feedback_recipient will not be usable. !!!")
-                    print("="*50)
+                    print(
+                        "!!! Some commands like /set_feedback_recipient will not be usable. !!!"
+                    )
+                    print("=" * 50)
                 else:
                     # IDが数字であることを確認してから変換する
-                    owner_ids = [int(id_str) for id_str in owner_ids_str if id_str.isdigit()]
+                    owner_ids = [
+                        int(id_str) for id_str in owner_ids_str if id_str.isdigit()
+                    ]
                     if not owner_ids:
-                        print("="*50)
-                        print("!!! WARNING: owner_ids in config.json contains invalid values! !!!")
-                        print("="*50)
-                
+                        print("=" * 50)
+                        print(
+                            "!!! WARNING: owner_ids in config.json contains invalid values! !!!"
+                        )
+                        print("=" * 50)
+
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            print("="*50)
+            print("=" * 50)
             print(f"!!! ERROR: Could not load config.json: {e} !!!")
             print("!!! Owner-only commands will not be available. !!!")
-            print("="*50)
+            print("=" * 50)
 
+        # ここで1回だけ super().__init__ を呼び出す
         super().__init__(
             command_prefix="!y1oing_unused_prefix!",
             intents=intents,
-            owner_ids=set(owner_ids)
+            owner_ids=set(owner_ids),
         )
 
         # Set up the global error handler for all application commands.
         # This is the standard way to assign an error handler within a class.
         self.tree.on_error = self.on_app_command_error
 
-
-    async def on_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def on_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
         """
         Global error handler for all application (slash) commands.
         Catches and handles various types of command errors.
-        
+
         全てのアプリケーション（スラッシュ）コマンドのグローバルエラーハンドラ。
         様々な種類のコマンドエラーを捕捉し、処理します。
         """
@@ -97,26 +103,30 @@ class Y1oingBot(commands.Bot):
             cooldown_time = round(error.retry_after, 2)
             await interaction.response.send_message(
                 f"⏳ This command is on cooldown. Please try again in **{cooldown_time} seconds**.",
-                ephemeral=True
+                ephemeral=True,
             )
             return
-            
+
         if isinstance(error, app_commands.errors.MissingPermissions):
             await interaction.response.send_message(
                 f"❌ You need the following permissions to run this command: `{'`, `'.join(error.missing_permissions)}`",
-                ephemeral=True
+                ephemeral=True,
             )
             return
 
         if isinstance(error, app_commands.errors.CheckFailure):
-            await interaction.response.send_message("❌ You do not meet the conditions to run this command.", ephemeral=True)
+            await interaction.response.send_message(
+                "❌ You do not meet the conditions to run this command.", ephemeral=True
+            )
             return
 
-        original_error = getattr(error, 'original', error)
-        print(f"Unhandled error in command '{interaction.command.name}': {original_error}")
-        
+        original_error = getattr(error, "original", error)
+        print(
+            f"Unhandled error in command '{interaction.command.name}': {original_error}"
+        )
+
         error_message = "An unexpected error occurred while executing the command. Please report this to the developer."
-        
+
         try:
             if interaction.response.is_done():
                 await interaction.followup.send(error_message, ephemeral=True)
@@ -125,25 +135,26 @@ class Y1oingBot(commands.Bot):
         except discord.errors.InteractionResponded:
             await interaction.followup.send(error_message, ephemeral=True)
 
-
     async def setup_hook(self):
         """
         This method is called once when the bot logs in.
         It's used to load cogs and synchronize the command tree.
-        
+
         このメソッドはボットがログインする際に一度だけ呼び出されます。
         Cogの読み込みとコマンドツリーの同期に使用されます。
         """
         # Load all cogs from the 'bot/cogs' directory.
         # 'bot/cogs' ディレクトリから全てのCogを読み込みます。
         print("--- Cogs Loading ---")
-        for filename in os.listdir("./bot/cogs"):
-            if filename.endswith(".py") and not filename.startswith("__"):
-                try:
-                    await self.load_extension(f"bot.cogs.{filename[:-3]}")
-                    print(f"Loaded: {filename}")
-                except Exception as e:
-                    print(f"Failed to load {filename}: {e}")
+        for path in Path("./bot/cogs").glob("*.py"):
+            if path.name.startswith("__"):
+                continue
+            try:
+                await self.load_extension(f"bot.cogs.{path.stem}")
+                print(f"Loaded: {path.name}")
+            except Exception as e:
+                print(f"Failed to load {path.name}: {e}")
+
         print("--------------------")
 
         # Synchronize the application commands with Discord.
@@ -154,22 +165,24 @@ class Y1oingBot(commands.Bot):
         # await self.tree.sync(guild=TEST_GUILD)
         await self.tree.sync()
 
-
     async def on_ready(self):
         """
         This event is triggered when the bot is fully connected and ready.
         It prints login information and sets the bot's presence.
-        
+
         このイベントは、ボットが完全に接続され準備が完了したときにトリガーされます。
         ログイン情報を表示し、ボットのプレゼンスを設定します。
         """
         print("--------------------")
         print(f"Logged in as {self.user} (ID: {self.user.id})")
-        
+
         # Set the bot's presence (status and activity).
-        activity = discord.Activity(type=discord.ActivityType.listening, name="PLAY | Sound Perfected")
+        activity = discord.Activity(
+            type=discord.ActivityType.listening, name="PLAY | Sound Perfected"
+        )
         await self.change_presence(status=discord.Status.online, activity=activity)
-        
+
         print(f"Presence set to: Listening to {activity.name}")
         print("y1oing Music BOT is ready!")
         print("--------------------")
+

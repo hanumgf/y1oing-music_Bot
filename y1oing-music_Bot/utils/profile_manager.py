@@ -10,7 +10,6 @@
 
 import json
 from pathlib import Path
-import discord
 
 
 
@@ -18,7 +17,6 @@ class ProfileManager:
     """Manages loading and saving user profile data to/from JSON files."""
     def __init__(self, data_path: str = "data/profiles"):
         # Ensure the directory for storing profiles exists.
-        # プロフィールを保存するディレクトリが存在することを確認します。
         self.profiles_path = Path(data_path)
         self.profiles_path.mkdir(parents=True, exist_ok=True)
 
@@ -58,13 +56,11 @@ class ProfileManager:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 # Start with default settings and overwrite with saved values.
-                # デフォルト設定を基に、保存された値で上書きします。
                 profile_data = self._get_default_profile()
                 profile_data.update(json.load(f))
                 return profile_data
         except (json.JSONDecodeError, TypeError):
             # In case of file corruption, return default settings to prevent crashes.
-            # ファイルが破損している場合、クラッシュを防ぐためにデフォルト設定を返します。
             return self._get_default_profile()
 
 

@@ -115,11 +115,13 @@ class Player:
                     # The queue is empty. First, check if we should loop the entire history.
                     if self.loop_mode == 'queue' and self.history:
                         print(f"INFO: Queue ended in guild {self.guild_id}. Looping back from history.")
-                        
+
                         # Refill the queue from the history.
                         self.queue.extend(self.history)
                         self.history.clear()
-                        
+
+                        self.current_track = None
+
                         # A small, user-friendly message.
                         if self.text_channel:
                             try:
@@ -133,8 +135,6 @@ class Player:
                     # If not looping, proceed to the normal idle state logic that you already have.
                     self.is_playing = False
                     
-                    # 最後に再生していた曲 (current_track) は、既にループ先頭の
-                    # [Post-Playback Phase] で履歴に追加されているはずなので、ここでは何もしない。
                     self.current_track = None
                     
                     if self.history:
@@ -181,8 +181,14 @@ class Player:
                         if error: print(f'Playback error in guild {self.guild_id}: {error}')
                         self.bot.loop.create_task(self.check_playback_finished())
 
-                    self.voice_client.play(source, after=after_playback)
-                    
+                    try:
+                        self.voice_client.play(source, after=after_playback)
+                    except Exception as e:
+                        print(f"ERROR: Failed to start playback in guild {self.guild_id}: {e}")
+                        if self.text_channel:
+                            await self.text_channel.send(f"❌ Playback error: Skipping `{self.current_track.get('title', 'Unknown')}`.")
+                        self.song_finished.set()  # 強制的に待機を解除して次の曲へ
+
                     # Wait here until the song finishes or is stopped/skipped.
                     await self.song_finished.wait()
                     
@@ -309,9 +315,15 @@ class Player:
 
     async def autoleave_timer(self):
         """Waits for a period of inactivity, then triggers cleanup."""
-        await asyncio.sleep(600) # 10 minutes
-        if self.voice_client and not self.is_playing and not self.is_cleaning_up:
-            
+        for _ in range(600):
+            await asyncio.sleep(1)
+            if self.is_playing:
+                return
+
+            if not self.voice_client or not self.voice_client.is_connected():
+                break
+
+        if not self.is_cleaning_up:
             await self.cleanup()
 
 
@@ -468,10 +480,15 @@ class Player:
                 await self.text_channel.send(f"❌ Failed to add `{query}`:\n```\n{display_error}\n```")
             return
         
+        # track_info['requested_by'] = interaction.user.mention
+        # was_empty = not self.queue and not self.current_track
+        # self.queue.append(track_info)
+
         track_info['requested_by'] = interaction.user.mention
+        track_info['requester_name'] = interaction.user.display_name
         was_empty = not self.queue and not self.current_track
         self.queue.append(track_info)
-        
+
         if was_empty:
             self.queue_added.set() # Wake up the player_loop if it was idle.
 
@@ -496,10 +513,17 @@ class Player:
             query = track.get('webpage_url') or track.get('title', '')
             if not query: continue
 
+            #new_track_info, error = await self.audio_handler.get_track_info(query)
+            #if new_track_info:
+            #    new_track_info['requested_by'] = interaction.user.mention
+            #    self.queue.append(new_track_info)
+
             new_track_info, error = await self.audio_handler.get_track_info(query)
             if new_track_info:
                 new_track_info['requested_by'] = interaction.user.mention
+                new_track_info['requester_name'] = interaction.user.display_name
                 self.queue.append(new_track_info)
+
                 count += 1
                 if i == 0 and initial_queue_empty:
                     self.queue_added.set() # Start playback with the first available track.
@@ -604,7 +628,7 @@ class Player:
                 break
 
             # Wait for the next update cycle.
-            await asyncio.sleep(5) # ~~Increased sleep time to reduce API calls.~~
+            await asyncio.sleep(10)
 
 
     def create_now_playing_embed(self, finished=False):
@@ -633,12 +657,8 @@ class Player:
         current_pos = len(self.history) + 1
         total_tracks = len(self.history) + 1 + len(self.queue)
         queue_status = f"Queue: {current_pos}/{total_tracks}"
-        
-        display_name = "Unknown"
-        if (req_by_id_str := track.get('requested_by', '0').strip('<@!>')).isdigit():
-            if (req_by_user := self.bot.get_user(int(req_by_id_str))):
-                display_name = req_by_user.display_name
-        
+        display_name = track.get('requester_name', 'Unknown')
+
         volume_status = f"Volume: {int(self.volume * 100)}%"
         embed.set_footer(text=f"Requested by: {display_name} | 🎶 {queue_status} | 🔊 {volume_status}")
         return embed

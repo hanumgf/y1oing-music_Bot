@@ -13,8 +13,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import json
-import os
-from datetime import datetime, timedelta
+from pathlib import Path  # os を削除し pathlib を追加
 
 
 # --- Help Command Data Store ---
@@ -166,15 +165,14 @@ class UtilityCog(commands.Cog):
     """Cog for utility commands like /help."""
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # 1. Get the absolute path to this file (__file__)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        # 2. Constructs an absolute path to `config.json`, located three levels above (`..`)
-        self.config_path = os.path.join(script_dir, '..', '..', 'config.json')
+        # pathlibを使用してモダンにパスを取得
+        # (bot/cogs/utility.py から見て3階層上がルートディレクトリ)
+        self.config_path = Path(__file__).resolve().parent.parent.parent / 'config.json'
 
     # --- Load and Save Config Methods ---
     def load_config(self) -> dict:
         """設定ファイルを読み込む"""
-        if os.path.exists(self.config_path):
+        if self.config_path.exists():
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {} # ファイルが存在しない場合は空の辞書を返す
@@ -224,8 +222,9 @@ class UtilityCog(commands.Cog):
         try:
             # 2. IDが、実在するDiscordユーザーのものか
             recipient_id = int(recipient_id_str)
-            recipient = await self.bot.fetch_user(recipient_id)
-        except (discord.NotFound, ValueError):
+            # 修正: まずキャッシュ(get_user)を確認し、なければAPIから取得(fetch_user)する
+            recipient = self.bot.get_user(recipient_id) or await self.bot.fetch_user(recipient_id)
+        except (discord.NotFound, ValueError, discord.HTTPException):
             print(f"--- FEEDBACK ERROR ---")
             print(f"Feedback from {interaction.user} failed.")
             print(f"Reason: The user ID '{recipient_id_str}' set as feedback_recipient_id could not be found.")
@@ -259,6 +258,6 @@ class UtilityCog(commands.Cog):
 
 
 
-async def setup(bot: commands.T):
+async def setup(bot: commands.Bot):
     """Adds the UtilityCog to the bot."""
     await bot.add_cog(UtilityCog(bot))

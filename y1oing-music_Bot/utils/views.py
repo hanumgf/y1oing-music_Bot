@@ -14,7 +14,6 @@
 
 import discord
 import time
-import math
 from utils.player import Player
 
 
@@ -297,9 +296,10 @@ class SearchView(discord.ui.View):
         """Clears and rebuilds the view's components for the current page."""
         self.clear_items()
         self.add_item(self.create_select())
+        # 修正: 要素数がピッタリ10個などの時に空のページが生成されないよう計算式を修正
+        max_page = max(0, (len(self.tracks) - 1) // self.items_per_page)
         self.add_item(PageButton(label="⏪ Previous", direction=-1, current_page=self.current_page))
-        self.add_item(PageButton(label="Next ⏩", direction=1, current_page=self.current_page, max_page=len(self.tracks)//self.items_per_page))
-
+        self.add_item(PageButton(label="Next ⏩", direction=1, current_page=self.current_page, max_page=max_page))
 
     def create_select(self) -> discord.ui.Select:
         """Creates the dropdown select menu for the current page of tracks."""
@@ -315,11 +315,6 @@ class SearchView(discord.ui.View):
         return TrackSelect(options=options)
 
 
-    async def update_view(self):
-        """Updates the view components and edits the original message."""
-        self.update_components()
-        await self.interaction.edit_original_response(view=self)
-
 
 class PageButton(discord.ui.Button):
     """A button for navigating pages in the SearchView."""
@@ -334,9 +329,8 @@ class PageButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: SearchView = self.view
         view.current_page += self.direction
-        await view.update_view()
-        await interaction.response.defer()
-
+        view.update_components()
+        await interaction.response.edit_message(view=view)
 
 class TrackSelect(discord.ui.Select):
     """The dropdown menu for selecting a track from search results."""
@@ -367,4 +361,5 @@ class TrackSelect(discord.ui.Select):
         reception_message = await view.player.add_to_queue(interaction, video_url)
         
         # Display the result and remove the search panel.
-        await view.interaction.edit_original_response(content=reception_message, view=None, embed=None)
+        #await view.interaction.edit_original_response(content=reception_message, view=None, embed=None)
+        await interaction.edit_original_response(content=reception_message, view=None, embed=None)

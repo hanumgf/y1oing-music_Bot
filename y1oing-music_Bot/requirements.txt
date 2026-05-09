@@ -1,5 +1,5 @@
 # Discord Bot Framework
-discord.py
+discord.py[voice]
 
 # For loading environment variables from .env file
 python-dotenv
@@ -11,4 +11,4 @@ yt-dlp
 PyNaCl
 
 # Manually specify a known stable version of aiohttp
-aiohttp==3.9.1
+aiohttp

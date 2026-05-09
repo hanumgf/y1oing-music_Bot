@@ -17,18 +17,31 @@ from utils.audio_handler import executor
 BASE_DIR = Path(__file__).resolve().parent.parent
 os.chdir(BASE_DIR)
 
+
 def main():
     # Load environment variables from the .env file.
     load_dotenv()
-    
+
+    #    bot = Y1oingBot()
+    #    try:
+    #        bot.run(os.getenv("DISCORD_TOKEN"))
+    #    except KeyboardInterrupt:
+
     bot = Y1oingBot()
 
+    token = os.getenv("DISCORD_TOKEN")
+    if not token:
+        print("=" * 50)
+        print("!!! ERROR: DISCORD_TOKEN is not set in the environment variables. !!!")
+        print("=" * 50)
+        return
+
     try:
-        bot.run(os.getenv("DISCORD_TOKEN"))
-        
+        bot.run(token)
+
     except KeyboardInterrupt:
         print("\nKeyboardInterrupt received. Bot is shutting down...")
-        
+
     finally:
         print("Shutting down process pool...")
         executor.shutdown(wait=True)

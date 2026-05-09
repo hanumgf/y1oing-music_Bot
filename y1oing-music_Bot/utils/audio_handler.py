@@ -12,15 +12,11 @@
 
 import yt_dlp
 import discord
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor # ProcessPool から ThreadPool に変更
 import asyncio
 import re
 
-
-# A global process pool to run synchronous, blocking I/O operations without freezing the bot.
-# 同期的なブロッキングI/O操作をボットをフリーズさせることなく実行するためのグローバルなプロセスプール。
-executor = ProcessPoolExecutor(max_workers=2)
-
+executor = ThreadPoolExecutor(max_workers=10)
 
 # --- Synchronous Functions (for Process Pool) ---
 # These functions are designed to be run in a separate process via the executor.
@@ -43,7 +39,9 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
     
     if not allow_playlist:
         YDL_OPTIONS['noplaylist'] = True
-    
+    else:
+        YDL_OPTIONS['extract_flat'] = 'in_playlist'
+
     try:
         with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
             info = ydl.extract_info(query, download=False)
@@ -129,7 +127,7 @@ class AudioHandler:
 
     def is_youtube_url(self, query: str) -> bool:
         """Checks if the provided query string is a valid YouTube URL."""
-        youtube_regex = (r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})')
+        youtube_regex = (r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|shorts/|.+\?v=)?([^&=%\?]{11})')
         return re.search(youtube_regex, query) is not None
 
 
@@ -173,29 +171,35 @@ class AudioHandler:
         
         # [Mode 1: Balanced] - For Bluetooth/Speakers (イヤホン/スピーカー向け)
         FFMPEG_OPTIONS_BALANCED = {
-            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'before_options': (
+                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 '
+                '-rw_timeout 5000000 -thread_queue_size 4096'
+            ),
             'options': (
-                '-vn -loglevel error '
-                '-af "aresample=resampler=soxr:precision=20:out_sample_rate=48000,'
-                'anequalizer=c0 f=2500 w=100 g=-1.5 t=1|c0 f=6000 w=200 g=1 t=1|c0 f=15000 w=500 g=-2 t=1,'
-                'loudnorm=I=-16.5:LRA=7:TP=-1.5"'
+                '-vn -loglevel error -af "'
+                'aresample=48000:resampler=swr:precision=24:dither_method=shibata,'
+                'anequalizer=c0 f=60 w=15 g=1.5|c1 f=60 w=15 g=1.5,'
+                'compand=attacks=0.02:decays=0.1:points=-80/-80|-35/-35|0/-5,'
+                'loudnorm=I=-18:LRA=10:TP=-2.0"'
             )
         }
 
         # [Mode 2: Hi-Fi] - For high-quality headphones (高品質ヘッドホン向け)
         FFMPEG_OPTIONS_HIFI = {
             'before_options': (
-                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 '
-                '-rw_timeout 5000000 '
-                '-analyzeduration 5M -probesize 5M'
+                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 2 '
+                '-rw_timeout 10000000 -thread_queue_size 8192 '
+                '-analyzeduration 10M -probesize 10M -fflags +nobuffer+genpts'
             ),
             'options': (
                 '-vn -loglevel error '
-                '-af "aresample=resampler=swr:out_sample_rate=48000:dither_method=shibata,'
-                'anequalizer=c0 f=60 w=20 g=2 t=1|c0 f=4000 w=200 g=-1.5 t=1|c0 f=8000 w=300 g=1.5 t=1|c0 f=12000 w=500 g=1 t=1,'
+                '-af "aresample=48000:resampler=swr:precision=33:dither_method=shibata,'
+                'anequalizer=c0 f=55 w=15 g=2|c1 f=55 w=15 g=2|c0 f=1000 w=200 g=1.5|c1 f=1000 w=200 g=1.5,'
+                'asubboost=cutoff=70:feedback=0.2,'
                 'extrastereo=m=1.1,'
-                'aecho=0.8:0.4:30:0.2,'
-                'loudnorm=I=-18:LRA=13:TP=-1.0"'
+                'aecho=0.8:0.3:20:0.02,'
+                'compand=attacks=0.005:decays=0.1:points=-80/-80|-30/-20|-10/-8|0/-5,'
+                'loudnorm=I=-14:LRA=11:TP=-1.0"'
             )
         }
         
