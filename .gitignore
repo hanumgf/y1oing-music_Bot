@@ -3,6 +3,7 @@
 venv/
 # Environment variables (IMPORTANT: Keep this file private!)
 .env
+.python-version
 
 # --- Python Cache ---
 __pycache__/

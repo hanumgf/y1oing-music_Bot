@@ -1,7 +1,7 @@
-# Project Documentation: y1oing Music BOT
+# Project Documentation: y1Music-Bot
 
-This document provides a comprehensive overview of the design, architecture, and features for the **y1oing Music BOT** project.
-このドキュメントは、**y1oing Music BOT** プロジェクトの設計、アーキテクチャ、そして機能の全体像を解説するものです。
+This document provides a comprehensive overview of the design, architecture, and features for the **y1Music-Bot** project.
+このドキュメントは、**y1Music-Bot** プロジェクトの設計、アーキテクチャ、そして機能の全体像を解説するものです。
 
 ## 1. Project Philosophy & Goals
 
@@ -11,7 +11,7 @@ This project was born out of a determination to succeed where previous attempts 
 > **日本語:** このプロジェクトは、幾度となく挫折した音楽ボット制作への再挑戦から生まれました。多機能でありながら、本当に大切な「使いやすさ」や「パフォーマンス」がおろそかになりがちな既存のBotへの一つの答えです。応答性に優れ、直感的に使える、安定して使いやすい音楽ボットを創り上げることが目標でした。
 
 ### 1.2. Core Objectives
-- **Project Name**: **y1oing Music BOT**
+- **Project Name**: **y1Music-Bot**
 - **Primary Goal**: To create a comfortable and quality music bot, built for a great personal experience. (私だけの快適なMusic Botを作ること。)
 - **Technology**: **Python**, chosen for its robust ecosystem and developer-friendly nature.
 
@@ -19,8 +19,8 @@ This project was born out of a determination to succeed where previous attempts 
 
 ## 2. Feature Blueprint
 
-y1oing Music BOT is equipped with a rich set of features, designed to provide a pleasant music experience.
-(y1oing Music BOTは、快適な音楽体験を提供するために設計された、豊富な機能を備えています。)
+y1Music-Bot is equipped with a rich set of features, designed to provide a pleasant music experience.
+(y1Music-Botは、快適な音楽体験を提供するために設計された、豊富な機能を備えています。)
 
 | Category                  | Feature                               | Description                                                                 |
 |:--------------------------|:--------------------------------------|:----------------------------------------------------------------------------|
@@ -75,7 +75,7 @@ The project is architected with a clean separation of concerns, promoting modula
 (プロジェクトは、関心の分離を徹底したクリーンなアーキテクチャで構築されています。)
 
 ```bash
-y1oing-bot/
+y1Music-Bot/
 ├── .env.example              # Example environment file
 ├── .gitignore                # Files and directories to be ignored by Git
 ├── config.json               # Bot's static configuration

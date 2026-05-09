@@ -1,4 +1,4 @@
-# y1oing Music BOT
+# y1Music-Bot
 
 > "Sound Perfected, Experience Redefined."
 
@@ -70,16 +70,16 @@ The following software is required to run this bot.
 Follow these steps to get the bot running in your own environment.
 
 > **💡 Easy Method (簡単な方法):**
-> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1oing-music_Bot/releases/latest). After downloading, please proceed from **Step 2** below.
+> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1Music-Bot/releases/latest). After downloading, please proceed from **Step 2** below.
 
 ---
 
 ### Step 1: Clone the Repository (リポジトリのクローン)
 ```sh
-git clone https://github.com/hanumgf/y1oing-music_Bot.git
+git https://github.com/hanumgf/y1Music-Bot.git
 ```
 ```sh
-cd y1oing-music_Bot
+cd y1Music-Bot
 ```
 
 ### Step 2: Create a Virtual Environment (仮想環境の作成)
