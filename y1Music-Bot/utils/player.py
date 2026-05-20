@@ -628,7 +628,7 @@ class Player:
                 break
 
             # Wait for the next update cycle.
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
 
 
     def create_now_playing_embed(self, finished=False):

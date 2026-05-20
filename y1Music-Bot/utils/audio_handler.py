@@ -2,17 +2,17 @@
 # This module handles all interactions with external audio sources like YouTube.
 # It uses `yt-dlp` to fetch track information and search for music.
 # To prevent blocking the bot's event loop, all network-intensive operations
-# are run in a separate process using `concurrent.futures.ProcessPoolExecutor`.
+# are run in a separate process using `concurrent.futures.ThreadPoolExecutor`.
 
 # --- 日本語 ---
 # このモジュールは、YouTubeなどの外部音源とのすべてのやり取りを処理します。
 # `yt-dlp`を使用して曲情報の取得や音楽の検索を行います。
 # ボットのイベントループをブロックしないように、すべてのネットワーク負荷が高い操作は
-# `concurrent.futures.ProcessPoolExecutor` を用いて別プロセスで実行されます。
+# `concurrent.futures.ThreadPoolExecutor` を用いて別プロセスで実行されます。
 
 import yt_dlp
 import discord
-from concurrent.futures import ThreadPoolExecutor # ProcessPool から ThreadPool に変更
+from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import re
 
@@ -29,6 +29,14 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
     【同期関数】曲情報を取得するyt-dlpのコア処理。別プロセスで実行されます。
     必須のメタデータを抽出し、最も重要なダイレクトストリームURLを見つけ出します。
     """
+    if not allow_playlist and ("youtube.com/watch" in query or "youtu.be/" in query):
+        # &list= 以降、または &index= 以降を削除して1曲に固定する
+        query = re.sub(r"([&?])list=[^&]+", "", query)
+        query = re.sub(r"([&?])index=[^&]+", "", query)
+        query = re.sub(r"([&?])start_radio=[^&]+", "", query)
+        # 連続した?や&を整理
+        query = query.replace("?&", "?").replace("&&", "&").rstrip("?&")
+
     YDL_OPTIONS = {
         'format': 'bestaudio/best',
         'quiet': True,
@@ -111,9 +119,12 @@ def search_youtube_sync(query: str, max_results: int = 10):
         with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
             result = ydl.extract_info(query, download=False)
             entries = result.get('entries', [])
+            # Exclude search results that yt-dlp recognizes as "playlists"
             filtered_entries = [
                 entry for entry in entries
-                if entry and 'list=RD' not in entry.get('url', '')
+                if entry and 
+                'list=RD' not in entry.get('url', '') and 
+                entry.get('_type', 'video') != 'playlist'
             ]
             return filtered_entries, None
     except Exception as e:
@@ -127,9 +138,11 @@ class AudioHandler:
 
     def is_youtube_url(self, query: str) -> bool:
         """Checks if the provided query string is a valid YouTube URL."""
-        youtube_regex = (r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|shorts/|.+\?v=)?([^&=%\?]{11})')
+        youtube_regex = (
+            r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/'
+            r'(watch\?v=|embed/|v/|shorts/|.+\?v=)?([a-zA-Z0-9_-]{11})'
+        )
         return re.search(youtube_regex, query) is not None
-
 
     async def get_track_info(self, query: str, allow_playlist: bool = False):
         """
