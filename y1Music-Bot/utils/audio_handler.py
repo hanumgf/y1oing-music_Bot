@@ -24,75 +24,68 @@ executor = ThreadPoolExecutor(max_workers=10)
 def get_track_info_sync(query: str, allow_playlist: bool = False):
     """
     [Sync Function] The core yt-dlp process for fetching track info. Runs in a separate process.
-    It extracts essential metadata and, most importantly, finds a direct stream URL.
-    
-    【同期関数】曲情報を取得するyt-dlpのコア処理。別プロセスで実行されます。
-    必須のメタデータを抽出し、最も重要なダイレクトストリームURLを見つけ出します。
-    """
-    if not allow_playlist and ("youtube.com/watch" in query or "youtu.be/" in query):
-        # &list= 以降、または &index= 以降を削除して1曲に固定する
-        query = re.sub(r"([&?])list=[^&]+", "", query)
-        query = re.sub(r"([&?])index=[^&]+", "", query)
-        query = re.sub(r"([&?])start_radio=[^&]+", "", query)
-        # 連続した?や&を整理
-        query = query.replace("?&", "?").replace("&&", "&").rstrip("?&")
+    Optimized to always force single track streaming for maximum stability and speed.
 
+    [同期機能] トラック情報を取得するためのyt-dlpのコアプロセスです。別プロセスとして実行されます。
+    安定性と速度を最大限に高めるため、常にシングルトラックストリーミングを強制するように最適化されています。
+    """
+    # Force disable playlist loading to prevent timeouts and heavy data traffic.
+    # We want a single video stream regardless of what URL was passed.
     YDL_OPTIONS = {
         'format': 'bestaudio/best',
         'quiet': True,
         'no_warnings': True,
         'default_search': 'ytsearch',
-        'source_address': '0.0.0.0'
+        'source_address': '0.0.0.0',
+        'noplaylist': True  # Always tell yt-dlp to focus strictly on a single track.
     }
-    
-    if not allow_playlist:
-        YDL_OPTIONS['noplaylist'] = True
-    else:
-        YDL_OPTIONS['extract_flat'] = 'in_playlist'
 
     try:
         with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
             info = ydl.extract_info(query, download=False)
-        
-        # If the result is a playlist (has 'entries'), return the whole info dict.
-        # Otherwise, format it as a single track object as before.
+
+        if not info:
+            return None, "No data found."
+
+        # Safety Fallback: If yt-dlp still returns a list structure for some reason,
+        # safely extract the very first entry to get the video data.
         if 'entries' in info:
-            return info, None # Return the full playlist data
+            if info['entries']:
+                entry = info['entries'][0]
+            else:
+                return None, "The provided link contains no playable videos."
         else:
             entry = info
-            
-            # Thoroughly search for a playable stream URL within the complex format list.
-            
-            stream_url = None
-            
-            # Priority 1: Check the top-level 'url' key first.
-            if 'url' in entry:
-                stream_url = entry['url']
-            
-            # Priority 2: If not found, search the formats list for the best audio-only stream.
-            if not stream_url:
-                best_audio_format = None
-                for f in entry.get('formats', []):
-                    # Ideal format is audio-only ('vcodec'=='none') and has a URL.
-                    if f.get('vcodec') == 'none' and f.get('url'):
-                        # Prefer formats with a higher audio bitrate (abr).
-                        if best_audio_format is None or f.get('abr', 0) > best_audio_format.get('abr', 0):
-                            best_audio_format = f
-                
-                if best_audio_format:
-                    stream_url = best_audio_format.get('url')
 
-            # Priority 3: As a last resort, just take the URL from the format yt-dlp pre-selected.
-            if not stream_url:
-                stream_url = entry.get('url') # This might be the same as the first check, but it's a safe fallback.
+        # Thoroughly search for a playable stream URL within the complex format list.
+        stream_url = entry.get('url')
+        
+        if not stream_url:
+            best_audio_format = None
+            for f in entry.get('formats', []):
+                # Ideal format is audio-only ('vcodec'=='none') and has a valid URL.
+                if f.get('vcodec') == 'none' and f.get('url'):
+                    # Prefer formats with a higher audio bitrate (abr).
+                    if best_audio_format is None or f.get('abr', 0) > best_audio_format.get('abr', 0):
+                        best_audio_format = f
+            
+            if best_audio_format:
+                stream_url = best_audio_format.get('url')
 
-            return {
-                'id': entry.get('id'), 'title': entry.get('title', 'Unknown'),
-                'webpage_url': entry.get('webpage_url'), 'thumbnail': entry.get('thumbnail'),
-                'uploader': entry.get('uploader', 'Unknown'), 'uploader_url': entry.get('uploader_url'),
-                'duration': entry.get('duration', 0),
-                'url': stream_url
-            }, None
+        # Last resort fallback if everything else fails.
+        if not stream_url:
+            stream_url = entry.get('url')
+
+        return {
+            'id': entry.get('id'), 
+            'title': entry.get('title', 'Unknown'),
+            'webpage_url': entry.get('webpage_url') or (f"https://youtube.com{entry.get('id')}" if entry.get('id') else None), 
+            'thumbnail': entry.get('thumbnail'),
+            'uploader': entry.get('uploader', 'Unknown'), 
+            'uploader_url': entry.get('uploader_url'),
+            'duration': entry.get('duration', 0),
+            'url': stream_url
+        }, None
     
     except Exception as e:
         return None, str(e)
@@ -101,10 +94,10 @@ def get_track_info_sync(query: str, allow_playlist: bool = False):
 def search_youtube_sync(query: str, max_results: int = 10):
     """
     [Sync Function] Searches YouTube and returns a list of results. Runs in a separate process.
-    It filters out auto-generated "Mix" playlists from the results.
-    
-    【同期関数】YouTubeを検索し、結果のリストを返します。別プロセスで実行されます。
-    自動生成される「Mix」プレイリストを結果から除外します。
+    Strictly filters out any playlist data from text-based searches.
+
+    [同期機能] YouTubeを検索し、検索結果のリストを返します。別プロセスで実行されます。
+    テキスト検索からプレイリストのデータを厳密に除外します。
     """
     YDL_OPTIONS = {
         'format': 'm4a/bestaudio/best',
@@ -114,18 +107,26 @@ def search_youtube_sync(query: str, max_results: int = 10):
         'extract_flat': 'in_playlist',
         'source_address': '0.0.0.0'
     }
-    
+
     try:
         with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
             result = ydl.extract_info(query, download=False)
             entries = result.get('entries', [])
-            # Exclude search results that yt-dlp recognizes as "playlists"
-            filtered_entries = [
-                entry for entry in entries
-                if entry and 
-                'list=RD' not in entry.get('url', '') and 
-                entry.get('_type', 'video') != 'playlist'
-            ]
+            
+            # Clean up results: ensure no Mixlists or custom Playlists contaminate the search result.
+            filtered_entries = []
+            for entry in entries:
+                if not entry:
+                    continue
+                
+                url = entry.get('url', '')
+                _type = entry.get('_type', 'video')
+                
+                if 'list=' in url or _type == 'playlist' or 'playlist' in entry.get('id', ''):
+                    continue
+                
+                filtered_entries.append(entry)
+                
             return filtered_entries, None
     except Exception as e:
         return None, str(e)
@@ -140,7 +141,7 @@ class AudioHandler:
         """Checks if the provided query string is a valid YouTube URL."""
         youtube_regex = (
             r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/'
-            r'(watch\?v=|embed/|v/|shorts/|.+\?v=)?([a-zA-Z0-9_-]{11})'
+            r'(watch\?v=|embed/|v/|shorts/|playlist\?|.+\?v=)?([a-zA-Z0-9_-]+)'
         )
         return re.search(youtube_regex, query) is not None
 
@@ -157,7 +158,7 @@ class AudioHandler:
     async def search_youtube(self, query: str, max_results: int = 10):
         """
         Asynchronously searches YouTube by running `search_youtube_sync` in the process pool.
-        
+
         プロセスプールで `search_youtube_sync` を実行し、非同期にYouTubeを検索します。
         """
         loop = asyncio.get_running_loop()
@@ -215,17 +216,17 @@ class AudioHandler:
                 'loudnorm=I=-14:LRA=11:TP=-1.0"'
             )
         }
-        
-        # eq_mode引数に応じて、使用するオプションを決定
+
+        # Determine which options to use based on the eq_mode argument
         if eq_mode == "hifi":
             final_options = FFMPEG_OPTIONS_HIFI
             print("INFO: Using Hi-Fi EQ mode.")
         else:
             final_options = FFMPEG_OPTIONS_BALANCED
             print("INFO: Using Balanced EQ mode.")
-        
-        
-        # 3. オーディオソースの生成 (決定したオプションを使う)
+
+
+        # 3. Generating the audio source (using the selected options)
         try:
             source = discord.FFmpegPCMAudio(audio_url, **final_options)
             return discord.PCMVolumeTransformer(source, volume=volume)

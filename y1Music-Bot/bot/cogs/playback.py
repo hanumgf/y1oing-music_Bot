@@ -23,6 +23,7 @@ from utils.audio_handler import AudioHandler
 from utils.views import ControlPanelView, SearchView, PaginatorView
 import math
 import time
+import re
 
 
 
@@ -180,6 +181,7 @@ class PlaybackCog(commands.Cog):
 
     # --- Playback Control Commands ---
 
+
     @app_commands.command(name="play", description="Plays a song or adds it to the queue.")
     @app_commands.describe(query="A YouTube URL or a search query.")
     @checks.cooldown(1, 5.0, key=lambda i: i.guild.id)
@@ -190,15 +192,13 @@ class PlaybackCog(commands.Cog):
         
         player = self.get_or_create_player(interaction)
 
-        # This is the final alchemy.
-
         final_query = query # The URL or search term we will ultimately use.
         
-        # 1. First, check if the query is a direct URL. If it is, we also check for playlists.
+        # 1. First, check if the query is a direct URL.
         if self.audio_handler.is_youtube_url(query):
-            if 'list=' in query:
-                await interaction.followup.send("❌ Playlist URLs are not supported with /play. Use `/playlist_add` instead.", ephemeral=True)
-                return
+            # Playlists, Mixlists, and single videos are all accepted and streamlined as single tracks.
+            print(f"INFO: /play received a YouTube URL. Passing directly for single track streaming.")
+            final_query = query
         
         # 2. If it's a search term (not a URL), use the fast `search_youtube` to find the top result.
         else:
@@ -209,24 +209,25 @@ class PlaybackCog(commands.Cog):
                 await interaction.followup.send(f"❌ Could not find any results for `{query}`.", ephemeral=True)
                 return
             
-            # 3. Use the URL of the top result as our new, definitive query.
             top_result = entries[0]
+            video_id = top_result.get('id')
             final_query = top_result.get('webpage_url') or top_result.get('url')
+            
+            # Form a guaranteed valid watch URL if only the video ID was returned.
+            if not final_query and video_id:
+                final_query = f"https://youtube.com{video_id}"
             
             if not final_query:
                 await interaction.followup.send(f"❌ Found a result for `{query}`, but it has no valid URL.", ephemeral=True)
                 return
 
-        # 4. Now, proceed with a guaranteed valid URL.
-
-        # Ensure the bot is connected to a voice channel.
+        # 3. Ensure the bot is connected to a voice channel.
         success, _ = await player.connect(interaction)
         if not success:
-            # connect() handles its own response on failure, and we've already deferred.
             return
         
-        # Delegate the track adding process to the player.
-        # The allow_playlist=False is correctly set here.
+        # 4. Delegate the track adding process to the player.
+        # Playlist expansion is permanently disabled, matching our new robust starter design.
         reception_message = await player.add_to_queue(interaction, final_query, allow_playlist=False)
         await interaction.followup.send(reception_message)
 
