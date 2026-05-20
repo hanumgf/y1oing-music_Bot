@@ -479,10 +479,6 @@ class Player:
             if self.text_channel:
                 await self.text_channel.send(f"❌ Failed to add `{query}`:\n```\n{display_error}\n```")
             return
-        
-        # track_info['requested_by'] = interaction.user.mention
-        # was_empty = not self.queue and not self.current_track
-        # self.queue.append(track_info)
 
         track_info['requested_by'] = interaction.user.mention
         track_info['requester_name'] = interaction.user.display_name
@@ -512,11 +508,6 @@ class Player:
         for i, track in enumerate(tracks):
             query = track.get('webpage_url') or track.get('title', '')
             if not query: continue
-
-            #new_track_info, error = await self.audio_handler.get_track_info(query)
-            #if new_track_info:
-            #    new_track_info['requested_by'] = interaction.user.mention
-            #    self.queue.append(new_track_info)
 
             new_track_info, error = await self.audio_handler.get_track_info(query)
             if new_track_info:

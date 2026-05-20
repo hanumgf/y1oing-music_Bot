@@ -171,7 +171,7 @@ class ControlPanelView(discord.ui.View):
         """
         A helper to unify volume change logic. It sets the player volume,
         saves it to the user's profile, and updates the view.
-        
+
         音量変更ロジックを統一するヘルパー。プレイヤーの音量を設定し、
         ユーザーのプロフィールに保存して、ビューを更新します。
         """
@@ -342,7 +342,7 @@ class TrackSelect(discord.ui.Select):
         view: SearchView = self.view
         track_index = int(self.values[0])
         selected_track_metadata = view.tracks[track_index]
-        
+
         # Connect to VC if not already connected.
         success, _ = await view.player.connect(interaction)
         if not success:
@@ -351,7 +351,7 @@ class TrackSelect(discord.ui.Select):
             except discord.errors.InteractionResponded:
                 pass
             return
-            
+
         # Add the selected track to the queue via the official player method.
         video_url = selected_track_metadata.get('url') or selected_track_metadata.get('webpage_url')
         if not video_url:
@@ -359,7 +359,6 @@ class TrackSelect(discord.ui.Select):
             return
 
         reception_message = await view.player.add_to_queue(interaction, video_url)
-        
+
         # Display the result and remove the search panel.
-        #await view.interaction.edit_original_response(content=reception_message, view=None, embed=None)
         await interaction.edit_original_response(content=reception_message, view=None, embed=None)

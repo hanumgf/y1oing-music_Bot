@@ -37,7 +37,6 @@ class ProfileManager:
         return {
             "volume": 100,
             "eq_mode": "balanced", # default equalizer mode
-            # "equalizer": "flat"  // Future feature placeholder
         }
 
 
