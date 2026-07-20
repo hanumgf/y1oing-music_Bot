@@ -70,13 +70,13 @@ The following software is required to run this bot.
 Follow these steps to get the bot running in your own environment.
 
 > **💡 Easy Method (簡単な方法):**
-> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/hanumgf/y1Music-Bot/releases/latest). After downloading, please proceed from **Step 2** below.
+> If you are not familiar with Git, the easiest way is to download the `Source code (zip)` of the latest version from the [**Releases Page**](https://github.com/y0sh-dev/y1Music-Bot/releases/latest). After downloading, please proceed from **Step 2** below.
 
 ---
 
 ### Step 1: Clone the Repository (リポジトリのクローン)
 ```sh
-git https://github.com/hanumgf/y1Music-Bot.git
+git https://github.com/y0sh-dev/y1Music-Bot.git
 ```
 ```sh
 cd y1Music-Bot
