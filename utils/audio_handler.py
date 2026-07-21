@@ -201,8 +201,8 @@ class AudioHandler:
         # [Mode 2: Hi-Fi] - For high-quality headphones (高品質ヘッドホン向け)
         FFMPEG_OPTIONS_HIFI = {
             'before_options': (
-                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 2 '
-                '-rw_timeout 10000000 -thread_queue_size 8192 '
+                '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 10 '
+                '-rw_timeout 15000000 -thread_queue_size 16384 '
                 '-analyzeduration 10M -probesize 10M -fflags +nobuffer+genpts'
             ),
             'options': (
