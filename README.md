@@ -5,7 +5,7 @@
 [![Status](https://img.shields.io/badge/status-released-success.svg)]()
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Discord.py](https://img.shields.io/badge/discord.py-v2.x-7289da.svg)](https://github.com/Rapptz/discord.py)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 - A responsive and stable Discord music bot with a focus on a quality audio experience.  
 - 応答性と安定性を重視して作られた、快適な音楽体験のためのDiscord音楽ボット。
@@ -202,4 +202,4 @@ Restart the bot, and slash commands will be available immediately on your test s
 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
-Created by [`y1.ing`](https://discord.com/users/1030100948003065866)
+Created by [`yosann4`](https://discord.com/users/1192869601168609330)
